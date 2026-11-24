@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Details | LEXBD</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-[#001233] text-white">
+        <div class="max-w-6xl mx-auto px-6 py-5">
+            <a href="./index.html" class="text-2xl font-bold tracking-wide">
+                LEXBD
+            </a>
+            <p class="text-sm text-slate-300 mt-1">
+                Bangladesh Case Law Directory
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-10">
+
+        <a href="./index.html#cases"
+           class="text-blue-700 hover:underline text-sm">
+            ← Back to Case Directory
+        </a>
+
+        <div id="caseLoading" class="py-16 text-center text-slate-500">
+            Loading case details...
+        </div>
+
+        <div id="caseError"
+             class="hidden bg-red-50 border border-red-200 rounded-lg p-5 mt-6 text-red-700">
+        </div>
+
+        <article id="caseContent" class="hidden mt-8">
+
+            <div class="bg-white rounded-xl border border-slate-200 p-6 md:p-10">
+
+                <p class="text-sm text-amber-700 font-semibold mb-3">
+                    CASE DETAILS
+                </p>
+
+                <h1 id="caseTitle"
+                    class="text-2xl md:text-3xl font-bold text-[#001233] mb-5">
+                </h1>
+
+                <div class="grid md:grid-cols-2 gap-5 border-y border-slate-200 py-6">
+
+                    <div>
+                        <p class="text-sm text-slate-500">Case Number</p>
+                        <p id="caseNumber" class="font-medium mt-1">—</p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-slate-500">Citation</p>
+                        <p id="caseCitation" class="font-medium mt-1">—</p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-slate-500">Court</p>
+                        <p id="caseCourt" class="font-medium mt-1">—</p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-slate-500">Decision Date</p>
+                        <p id="caseDate" class="font-medium mt-1">—</p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-slate-500">Decision Year</p>
+                        <p id="caseYear" class="font-medium mt-1">—</p>
+                    </div>
+
+                </div>
+
+                <section class="mt-8">
+                    <h2 class="text-lg font-bold text-[#001233] mb-4">
+                        Parties
+                    </h2>
+
+                    <div class="grid md:grid-cols-2 gap-5">
+                        <div class="bg-slate-50 rounded-lg p-4">
+                            <p class="text-sm text-slate-500">Petitioner</p>
+                            <p id="casePetitioner" class="font-medium mt-2">—</p>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-lg p-4">
+                            <p class="text-sm text-slate-500">Respondent</p>
+                            <p id="caseRespondent" class="font-medium mt-2">—</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mt-8">
+                    <h2 class="text-lg font-bold text-[#001233] mb-4">
+                        Judges
+                    </h2>
+                    <div id="caseJudges" class="text-slate-700">
+                        —
+                    </div>
+                </section>
+
+                <section class="mt-8">
+                    <h2 class="text-lg font-bold text-[#001233] mb-4">
+                        Legal Topics
+                    </h2>
+                    <div id="caseTopics" class="flex flex-wrap gap-2">
+                        —
+                    </div>
+                </section>
+
+                <section class="mt-8">
+                    <h2 class="text-lg font-bold text-[#001233] mb-4">
+                        Legislation
+                    </h2>
+                    <div id="caseLegislation" class="space-y-4">
+                        —
+                    </div>
+                </section>
+
+                <section class="mt-10">
+                    <h2 class="text-xl font-bold text-[#001233] mb-5">
+                        Judgment
+                    </h2>
+
+                    <div id="caseJudgment"
+                         class="whitespace-pre-wrap leading-8 text-slate-700">
+                    </div>
+                </section>
+
+                <section id="caseSourceSection" class="hidden mt-8 pt-6 border-t">
+                    <a id="caseSource"
+                       href="#"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="text-blue-700 hover:underline">
+                        View Original Source
+                    </a>
+                </section>
+
+                <section id="casePdfSection" class="hidden mt-4">
+                    <a id="casePdf"
+                       href="#"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="text-blue-700 hover:underline">
+                        View Judgment PDF
+                    </a>
+                </section>
+
+            </div>
+        </article>
+
+    </main>
+
+    <footer class="bg-[#001233] text-slate-300 text-center py-6 mt-12">
+        <p>© <span id="currentYear"></span> LEXBD. All rights reserved.</p>
+    </footer>
+
+    <script src="./js/api.js"></script>
+    <script src="./js/case.js"></script>
+</body>
+</html>

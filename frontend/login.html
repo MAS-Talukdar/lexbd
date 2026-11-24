@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta
+      name="description"
+      content="Sign in to LEXBD - Bangladesh Case Law Directory."
+    />
+
+    <title>Login | LEXBD</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+
+  <body class="min-h-screen bg-slate-50 flex flex-col">
+    <!-- Header -->
+    <header class="bg-[#001233] text-white">
+      <div class="max-w-6xl mx-auto px-6 py-5">
+        <a href="./index.html" class="text-2xl font-bold tracking-wide">
+          LEXBD
+        </a>
+
+        <p class="text-sm text-slate-300 mt-1">Bangladesh Case Law Directory</p>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="flex-1 flex items-center justify-center px-5 py-12">
+      <div
+        class="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-sm p-7 md:p-9"
+      >
+        <!-- Heading -->
+        <div class="text-center mb-8">
+          <div
+            class="w-14 h-14 rounded-full bg-blue-50 text-[#001233] flex items-center justify-center mx-auto mb-4"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 3 3 8l9 5 9-5-9-5Z" />
+              <path d="M3 12l9 5 9-5" />
+              <path d="M3 16l9 5 9-5" />
+            </svg>
+          </div>
+
+          <h1 class="text-2xl font-bold text-[#001233]">Welcome Back</h1>
+
+          <p class="text-slate-500 text-sm mt-2">
+            Sign in to your LEXBD account
+          </p>
+        </div>
+
+        <!-- Login Message -->
+        <div
+          id="loginMessage"
+          class="hidden rounded-lg p-3 text-sm mb-5"
+          role="alert"
+          aria-live="polite"
+        ></div>
+
+        <!-- Social Login -->
+        <div class="space-y-3">
+          <!-- Google Login -->
+          <div
+            id="g_id_onload"
+            data-client_id="1077010227486-ct84emcf3pv0pmm9il149a1s3q6drmou.apps.googleusercontent.com"
+            data-callback="handleGoogleCredential"
+            data-auto_prompt="false"
+          ></div>
+
+          <div
+            class="g_id_signin"
+            data-type="standard"
+            data-size="large"
+            data-theme="outline"
+            data-text="continue_with"
+            data-shape="rectangular"
+            data-logo_alignment="left"
+            data-width="350"
+          ></div>
+
+          <!-- Facebook -->
+          <button
+            type="button"
+            disabled
+            class="w-full flex items-center justify-center gap-3 border border-slate-300 rounded-lg py-3 text-sm font-medium text-slate-500 bg-slate-50 cursor-not-allowed opacity-70"
+            title="Facebook Login integration is coming soon"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="#1877F2"
+            >
+              <path
+                d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.313 0 2.686.236 2.686.236v2.97h-1.513c-1.49 0-1.955.93-1.955 1.887v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073Z"
+              />
+            </svg>
+
+            Continue with Facebook
+
+            <span class="text-xs text-slate-400"> (Coming soon) </span>
+          </button>
+
+          <!-- Apple -->
+          <button
+            type="button"
+            disabled
+            class="w-full flex items-center justify-center gap-3 border border-slate-300 rounded-lg py-3 text-sm font-medium text-slate-500 bg-slate-50 cursor-not-allowed opacity-70"
+            title="Apple Login integration is coming soon"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M16.365 1.43c0 1.14-.416 2.2-1.117 3.02-.76.9-2.002 1.59-3.204 1.49-.153-1.1.43-2.25 1.13-3.04.77-.88 2.12-1.52 3.19-1.47Zm4.82 16.06c-.6 1.34-.89 1.94-1.67 3.12-1.08 1.63-2.6 3.66-4.49 3.68-1.67.02-2.1-1.09-4.37-1.08-2.27.01-2.75 1.1-4.42 1.08-1.9-.02-3.34-1.85-4.42-3.48-3.02-4.59-3.34-9.98-1.47-12.85 1.33-2.03 3.44-3.22 5.35-3.22 1.94 0 3.16 1.1 4.76 1.1 1.55 0 2.5-1.1 4.74-1.1 1.7 0 3.5.93 4.83 2.53-4.25 2.33-3.56 8.4 1.16 10.22Z"
+              />
+            </svg>
+
+            Continue with Apple
+
+            <span class="text-xs text-slate-400"> (Coming soon) </span>
+          </button>
+        </div>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-4 my-6">
+          <div class="flex-1 border-t border-slate-200"></div>
+
+          <span class="text-xs text-slate-400 uppercase">
+            Or continue with email
+          </span>
+
+          <div class="flex-1 border-t border-slate-200"></div>
+        </div>
+
+        <!-- Email Login Form -->
+        <form id="loginForm" class="space-y-5">
+          <div>
+            <label
+              for="email"
+              class="block text-sm font-medium text-slate-700 mb-2"
+            >
+              Email Address
+            </label>
+
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Enter your email"
+              autocomplete="username"
+              required
+              class="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+            />
+          </div>
+
+          <div>
+            <label
+              for="password"
+              class="block text-sm font-medium text-slate-700 mb-2"
+            >
+              Password
+            </label>
+
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+              class="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="loginButton"
+            class="w-full bg-[#001233] hover:bg-blue-950 text-white font-semibold py-3 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Sign In
+          </button>
+        </form>
+
+        <!-- Registration Link -->
+        <div class="text-center mt-7">
+          <p class="text-sm text-slate-500">
+            Don't have an account?
+
+            <a
+              href="./register.html"
+              class="text-blue-800 font-semibold hover:underline"
+            >
+              Create an account
+            </a>
+          </p>
+        </div>
+
+        <!-- Homepage Link -->
+        <div class="text-center mt-5">
+          <a href="./index.html" class="text-sm text-blue-700 hover:underline">
+            ← Back to Homepage
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#001233] text-slate-300 text-center py-5">
+      <p class="text-sm">
+        © <span id="currentYear"></span> LEXBD. All rights reserved.
+      </p>
+    </footer>
+
+    <!-- JavaScript -->
+
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Project JavaScript -->
+
+    <script src="./js/api.js"></script>
+    <script src="./js/login.js"></script>
+  </body>
+</html>

@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management | LEXBD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-100 text-slate-800">
+
+<header class="bg-slate-950 text-white">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">LEXBD</h1>
+            <p class="text-sm text-slate-400">User Management</p>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <a href="./admin-dashboard.html" class="text-sm hover:text-blue-300">
+                Dashboard
+            </a>
+            <button id="logoutButton"
+                class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm">
+                Logout
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 py-10">
+
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+        <div>
+            <h2 class="text-3xl font-bold">Manage Accounts</h2>
+            <p class="text-slate-500 mt-2">
+                Manage Editors and ordinary Users separately.
+            </p>
+        </div>
+    </div>
+
+    <div id="userMessage" class="hidden mb-6 p-4 rounded-lg text-sm"></div>
+
+    <!-- Management Tabs -->
+    <div class="flex flex-wrap gap-3 mb-6">
+        <button id="showEditorsTab"
+            class="bg-blue-900 text-white px-5 py-3 rounded-lg">
+            Editor Management
+        </button>
+
+        <button id="showUsersTab"
+            class="bg-white border border-slate-300 px-5 py-3 rounded-lg">
+            User Management
+        </button>
+    </div>
+
+    <!-- Editor Management -->
+    <section id="editorPanel" class="bg-white rounded-xl shadow-sm border border-slate-200">
+
+        <div class="p-6 border-b border-slate-200 flex flex-col md:flex-row md:justify-between gap-4">
+            <div>
+                <h3 class="text-xl font-bold">Editors</h3>
+                <p class="text-sm text-slate-500 mt-1">
+                    Total Editors: <span id="totalEditors">0</span>
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="createEditorButton"
+                    class="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm">
+                    + Create Editor
+                </button>
+
+                <button id="refreshEditors"
+                    class="border border-slate-300 hover:bg-slate-100 px-4 py-2 rounded-lg text-sm">
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-slate-600 text-sm">
+                    <tr>
+                        <th class="px-6 py-4">Name</th>
+                        <th class="px-6 py-4">Email</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="editorsTableBody">
+                    <tr>
+                        <td colspan="4" class="text-center px-6 py-10 text-slate-500">
+                            Loading Editors...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Ordinary User Management -->
+    <section id="userPanel"
+        class="hidden bg-white rounded-xl shadow-sm border border-slate-200">
+
+        <div class="p-6 border-b border-slate-200 flex flex-col md:flex-row md:justify-between gap-4">
+            <div>
+                <h3 class="text-xl font-bold">Ordinary Users</h3>
+                <p class="text-sm text-slate-500 mt-1">
+                    Total Users: <span id="totalUsers">0</span>
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="createOrdinaryUserButton"
+                    class="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm">
+                    + Create User
+                </button>
+
+                <button id="refreshUsers"
+                    class="border border-slate-300 hover:bg-slate-100 px-4 py-2 rounded-lg text-sm">
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-slate-600 text-sm">
+                    <tr>
+                        <th class="px-6 py-4">Name</th>
+                        <th class="px-6 py-4">Email</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr>
+                        <td colspan="4" class="text-center px-6 py-10 text-slate-500">
+                            Loading Users...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Create Account Form -->
+    <section id="createUserSection"
+        class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 mt-8">
+
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h3 id="formTitle" class="text-xl font-bold">Create Account</h3>
+                <p id="formRoleDescription" class="text-sm text-slate-500 mt-1"></p>
+            </div>
+
+            <button id="closeCreateForm"
+                class="text-slate-500 hover:text-red-600 text-2xl">
+                &times;
+            </button>
+        </div>
+
+        <form id="createUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <div>
+                <label for="userName" class="block text-sm font-medium mb-2">
+                    Full Name *
+                </label>
+                <input id="userName" type="text" required maxlength="150"
+                    class="w-full border border-slate-300 rounded-lg px-4 py-3">
+            </div>
+
+            <div>
+                <label for="userEmail" class="block text-sm font-medium mb-2">
+                    Email Address *
+                </label>
+                <input id="userEmail" type="email" required maxlength="255"
+                    class="w-full border border-slate-300 rounded-lg px-4 py-3">
+            </div>
+
+            <div class="md:col-span-2">
+                <label for="userPassword" class="block text-sm font-medium mb-2">
+                    Initial Password *
+                </label>
+                <input id="userPassword" type="password" required minlength="12"
+                    autocomplete="new-password"
+                    class="w-full border border-slate-300 rounded-lg px-4 py-3">
+                <p class="text-xs text-slate-500 mt-1">
+                    Minimum 12 characters.
+                </p>
+            </div>
+
+            <div class="md:col-span-2 flex gap-3">
+                <button id="createUserButton" type="submit"
+                    class="bg-blue-900 hover:bg-blue-800 text-white px-6 py-3 rounded-lg">
+                    Create Account
+                </button>
+
+                <button type="button" id="cancelCreateForm"
+                    class="bg-slate-200 hover:bg-slate-300 px-6 py-3 rounded-lg">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<script src="./js/api.js"></script>
+<script src="./js/admin-users.js"></script>
+
+</body>
+</html>

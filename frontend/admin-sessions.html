@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Management | LEXBD</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body class="bg-slate-100 min-h-screen">
+
+    <header class="bg-[#001233] text-white">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+            <div>
+                <a href="./index.html" class="text-2xl font-bold">LEXBD</a>
+                <p class="text-xs text-slate-300 mt-1">Administration Panel</p>
+            </div>
+
+            <button id="logoutButton"
+                class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm">
+                Logout
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+
+        <div class="mb-8">
+            <a href="./admin-dashboard.html"
+               class="text-sm text-blue-700 hover:underline">
+                ← Back to Dashboard
+            </a>
+
+            <h1 class="text-3xl font-bold text-[#001233] mt-5">
+                Session Management
+            </h1>
+
+            <p class="text-slate-500 mt-2">
+                Monitor and manage active Editor and User sessions.
+            </p>
+        </div>
+
+        <div id="sessionMessage"
+             class="hidden rounded-lg p-4 mb-6 text-sm"
+             role="alert"
+             aria-live="polite">
+        </div>
+
+        <section class="bg-white border border-slate-200 rounded-xl p-6 mb-7">
+            <div class="flex flex-wrap justify-between items-center gap-4">
+
+                <div>
+                    <p class="text-sm text-slate-500">Active Sessions</p>
+                    <p id="totalSessions"
+                       class="text-3xl font-bold text-[#001233] mt-2">
+                        —
+                    </p>
+                </div>
+
+                <button id="refreshSessions"
+                    class="bg-[#001233] hover:bg-blue-950 text-white px-5 py-3 rounded-lg text-sm">
+                    Refresh Sessions
+                </button>
+
+            </div>
+        </section>
+
+        <section class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+
+            <div class="p-6 border-b border-slate-200">
+                <h2 class="text-lg font-bold text-[#001233]">
+                    User Sessions
+                </h2>
+            </div>
+
+            <div class="overflow-x-auto">
+
+                <table class="w-full text-sm text-left">
+
+                    <thead class="bg-slate-50 text-slate-600">
+                        <tr>
+                            <th class="px-6 py-4">User</th>
+                            <th class="px-6 py-4">Email</th>
+                            <th class="px-6 py-4">Role</th>
+                            <th class="px-6 py-4">Expires At</th>
+                            <th class="px-6 py-4">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="sessionsTableBody">
+                        <tr>
+                            <td colspan="5"
+                                class="px-6 py-10 text-center text-slate-500">
+                                Loading sessions...
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center text-slate-500 text-sm py-8">
+        © <span id="currentYear"></span> LEXBD. All rights reserved.
+    </footer>
+
+    <script src="./js/api.js"></script>
+    <script src="./js/admin-sessions.js"></script>
+
+</body>
+</html>

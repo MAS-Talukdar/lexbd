@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Dashboard | LEXBD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lexbd: {
+                            navy: "#001233",
+                            gold: "#A37A00"
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+
+<body class="bg-slate-100 min-h-screen text-slate-800">
+
+    <!-- Header -->
+    <header class="bg-lexbd-navy text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-5 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div>
+                <a href="./index.html" class="text-2xl font-bold tracking-wide">
+                    LEX<span class="text-yellow-400">BD</span>
+                </a>
+                <p class="text-xs text-slate-300 mt-1">
+                    Bangladesh Case Law Directory
+                </p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p id="editorName" class="font-semibold">Editor</p>
+                    <p class="text-xs text-yellow-300">Editor Account</p>
+                </div>
+
+                <button
+                    id="logoutButton"
+                    class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-semibold">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-5 py-8">
+
+        <!-- Welcome -->
+        <section class="mb-8">
+            <p class="text-sm text-lexbd-gold font-semibold">
+                EDITOR WORKSPACE
+            </p>
+            <h1 class="text-3xl font-bold text-lexbd-navy mt-2">
+                Welcome, <span id="welcomeName">Editor</span>
+            </h1>
+            <p class="text-slate-600 mt-2">
+                Create and manage legal case records for LEXBD.
+            </p>
+        </section>
+
+        <!-- Information -->
+        <section class="bg-white border-l-4 border-lexbd-gold rounded-lg p-5 shadow-sm mb-8">
+            <h2 class="font-bold text-lexbd-navy mb-1">
+                Your responsibilities
+            </h2>
+            <p class="text-sm text-slate-600">
+                You can create and edit case records. All newly created cases
+                remain Draft until an Admin reviews and publishes them.
+                Publishing, archiving and restoring cases are Admin-only actions.
+            </p>
+        </section>
+
+        <!-- Statistics -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                <p class="text-sm text-slate-500">Total Cases</p>
+                <h2 id="totalCases" class="text-3xl font-bold text-lexbd-navy mt-2">—</h2>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                <p class="text-sm text-slate-500">Draft Cases</p>
+                <h2 id="draftCases" class="text-3xl font-bold text-amber-600 mt-2">—</h2>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                <p class="text-sm text-slate-500">Published Cases</p>
+                <h2 id="publishedCases" class="text-3xl font-bold text-green-600 mt-2">—</h2>
+            </div>
+
+        </section>
+
+        <!-- Actions -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+
+            <a href="./editor-case-form.html"
+               class="bg-lexbd-navy hover:bg-slate-800 text-white rounded-xl p-6 shadow-sm transition">
+                <div class="text-3xl mb-3">＋</div>
+                <h3 class="text-lg font-bold">Add New Case</h3>
+                <p class="text-sm text-slate-300 mt-2">
+                    Create a new legal case record.
+                </p>
+            </a>
+
+            <a href="#myCases"
+               class="bg-white hover:bg-slate-50 border border-slate-200 rounded-xl p-6 shadow-sm transition">
+                <div class="text-3xl mb-3">▤</div>
+                <h3 class="text-lg font-bold text-lexbd-navy">My Cases</h3>
+                <p class="text-sm text-slate-500 mt-2">
+                    View and edit case records.
+                </p>
+            </a>
+
+            <a href="./index.html"
+               class="bg-white hover:bg-slate-50 border border-slate-200 rounded-xl p-6 shadow-sm transition">
+                <div class="text-3xl mb-3">⌕</div>
+                <h3 class="text-lg font-bold text-lexbd-navy">Public Directory</h3>
+                <p class="text-sm text-slate-500 mt-2">
+                    Visit the public case directory.
+                </p>
+            </a>
+
+        </section>
+
+        <!-- My Cases -->
+        <section id="myCases" class="bg-white rounded-xl shadow-sm border border-slate-200">
+
+            <div class="p-5 border-b border-slate-200 flex flex-wrap justify-between items-center gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-lexbd-navy">Case Records</h2>
+                    <p class="text-sm text-slate-500 mt-1">
+                        Cases available in the editorial workspace
+                    </p>
+                </div>
+
+                <button id="refreshButton"
+                    class="border border-slate-300 hover:bg-slate-100 px-4 py-2 rounded-lg text-sm">
+                    Refresh
+                </button>
+            </div>
+
+            <div class="p-5">
+                <div id="message" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-100 text-slate-600">
+                            <tr>
+                                <th class="p-3">Case Title</th>
+                                <th class="p-3">Year</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="caseTableBody">
+                            <tr>
+                                <td colspan="4" class="p-6 text-center text-slate-500">
+                                    Loading cases...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Account -->
+        <section class="mt-8 bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+            <h2 class="text-lg font-bold text-lexbd-navy">Account Settings</h2>
+
+            <div class="flex flex-wrap gap-3 mt-4">
+                <a href="./change-password.html"
+                   class="border border-slate-300 hover:bg-slate-100 px-4 py-2 rounded-lg text-sm">
+                    Change Password
+                </a>
+
+                <a href="./index.html"
+                   class="border border-slate-300 hover:bg-slate-100 px-4 py-2 rounded-lg text-sm">
+                    Back to Homepage
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center text-sm text-slate-500 py-6">
+        © <span id="currentYear"></span> LEXBD. All rights reserved.
+    </footer>
+
+    <script src="./js/editor-dashboard.js"></script>
+</body>
+</html>

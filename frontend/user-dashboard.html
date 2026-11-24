@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard | LEXBD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-slate-50">
+
+    <!-- Header -->
+    <header class="bg-[#001233] text-white">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+
+            <a href="./index.html" class="text-2xl font-bold">
+                LEX<span class="text-[#A37A00]">BD</span>
+            </a>
+
+            <div class="flex items-center gap-4">
+                <span id="userName" class="text-sm">Loading...</span>
+
+                <button
+                    id="logoutButton"
+                    class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm">
+                    Logout
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+
+        <!-- Welcome -->
+        <section class="mb-8">
+            <h1 class="text-3xl font-bold text-[#001233]">
+                Welcome, <span id="welcomeName">User</span>
+            </h1>
+
+            <p class="text-slate-500 mt-2">
+                Your personal legal research workspace.
+            </p>
+        </section>
+
+        <!-- Dashboard Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+            <div class="bg-white p-6 rounded-xl border border-slate-200">
+                <p class="text-sm text-slate-500">Account Type</p>
+                <h2 class="text-xl font-bold text-[#001233] mt-2">
+                    Registered User
+                </h2>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-slate-200">
+                <p class="text-sm text-slate-500">Account Status</p>
+                <h2 class="text-xl font-bold text-green-700 mt-2">
+                    Active
+                </h2>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-slate-200">
+                <p class="text-sm text-slate-500">Email Address</p>
+                <h2 id="userEmail"
+                    class="text-base font-semibold text-[#001233] mt-2 break-all">
+                    Loading...
+                </h2>
+            </div>
+
+        </section>
+
+        <!-- Case Search -->
+        <section class="bg-white rounded-xl border border-slate-200 p-7">
+
+            <div class="mb-5">
+                <h2 class="text-xl font-bold text-[#001233]">
+                    Search Case Law
+                </h2>
+
+                <p class="text-sm text-slate-500 mt-1">
+                    Find published judgments from Bangladesh courts.
+                </p>
+            </div>
+
+            <form id="caseSearchForm"
+                  class="flex flex-col md:flex-row gap-3">
+
+                <input
+                    type="search"
+                    id="caseSearchInput"
+                    placeholder="Search by case title, parties, citation or keywords..."
+                    class="flex-1 border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#001233]"
+                >
+
+                <button
+                    type="submit"
+                    class="bg-[#001233] text-white px-7 py-3 rounded-lg font-medium hover:bg-[#00204d]">
+                    Search Cases
+                </button>
+
+            </form>
+
+            <div id="searchMessage"
+                 class="hidden mt-5 text-sm">
+            </div>
+
+            <div id="searchResults" class="mt-6 space-y-4">
+            </div>
+
+            <div class="mt-6">
+                <a href="./cases.html"
+                   class="text-[#A37A00] font-semibold text-sm hover:underline">
+                    Browse All Published Cases →
+                </a>
+            </div>
+
+        </section>
+
+        <!-- Account Settings -->
+        <section class="mt-10 bg-white rounded-xl border border-slate-200 p-7">
+
+            <h2 class="text-xl font-bold text-[#001233]">
+                Account Settings
+            </h2>
+
+            <div class="mt-5 flex flex-wrap gap-4">
+
+                <a href="./change-password.html"
+                   class="border border-slate-300 px-5 py-3 rounded-lg text-sm font-medium hover:bg-slate-50">
+                    Change Password
+                </a>
+
+                <a href="./index.html"
+                   class="border border-slate-300 px-5 py-3 rounded-lg text-sm font-medium hover:bg-slate-50">
+                    Public Website
+                </a>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="./js/api.js"></script>
+    <script src="./js/user-dashboard.js"></script>
+
+</body>
+</html>

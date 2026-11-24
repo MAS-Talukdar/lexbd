@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard | LEXBD</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+
+  <body class="bg-slate-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-[#001233] text-white">
+      <div
+        class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center"
+      >
+        <div>
+          <a href="./index.html" class="text-2xl font-bold">LEXBD</a>
+          <p class="text-xs text-slate-300 mt-1">Administration Panel</p>
+        </div>
+
+        <button
+          id="logoutButton"
+          class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm"
+        >
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+      <!-- Welcome -->
+      <div class="mb-8">
+        <p class="text-sm text-slate-500">Administration</p>
+        <h1 class="text-3xl font-bold text-[#001233] mt-1">Admin Dashboard</h1>
+        <p class="text-slate-500 mt-2">
+          Welcome, <span id="adminName">Administrator</span>
+        </p>
+      </div>
+
+      <!-- Dashboard Message -->
+      <div
+        id="dashboardMessage"
+        class="hidden rounded-lg p-4 mb-6 text-sm"
+        role="alert"
+      ></div>
+
+      <!-- Statistics Heading -->
+      <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-[#001233]">Dashboard Overview</h2>
+          <p class="text-sm text-slate-500 mt-1">
+            Live statistics from the LEXBD database
+          </p>
+        </div>
+
+        <button
+          id="refreshStatisticsButton"
+          type="button"
+          class="bg-[#001233] hover:bg-blue-900 text-white px-5 py-3 rounded-lg text-sm font-medium transition"
+        >
+          ↻ Refresh Statistics
+        </button>
+      </div>
+
+      <!-- Case Statistics -->
+      <section>
+        <h2 class="text-lg font-bold text-[#001233] mb-5">Case Statistics</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition"
+          >
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-slate-500">Total Cases</p>
+              <span class="text-2xl">⚖️</span>
+            </div>
+            <p id="totalCases" class="text-3xl font-bold text-[#001233] mt-4">
+              —
+            </p>
+            <p class="text-xs text-slate-400 mt-2">All case records</p>
+          </div>
+
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition"
+          >
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-slate-500">Published Cases</p>
+              <span class="text-2xl">✓</span>
+            </div>
+            <p
+              id="publishedCases"
+              class="text-3xl font-bold text-green-700 mt-4"
+            >
+              —
+            </p>
+            <p class="text-xs text-slate-400 mt-2">Publicly available cases</p>
+          </div>
+
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition"
+          >
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-slate-500">Draft Cases</p>
+              <span class="text-2xl">📝</span>
+            </div>
+            <p id="draftCases" class="text-3xl font-bold text-amber-600 mt-4">
+              —
+            </p>
+            <p class="text-xs text-slate-400 mt-2">Waiting for publication</p>
+          </div>
+
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition"
+          >
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-slate-500">Archived Cases</p>
+              <span class="text-2xl">📁</span>
+            </div>
+            <p
+              id="archivedCases"
+              class="text-3xl font-bold text-slate-600 mt-4"
+            >
+              —
+            </p>
+            <p class="text-xs text-slate-400 mt-2">Archived records</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- User Statistics -->
+      <section class="mt-10">
+        <h2 class="text-lg font-bold text-[#001233] mb-5">User Statistics</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition"
+          >
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-slate-500">Total Users</p>
+              <span class="text-2xl">👥</span>
+            </div>
+            <p id="totalUsers" class="text-3xl font-bold text-[#001233] mt-4">
+              —
+            </p>
+            <p class="text-xs text-slate-400 mt-2">Registered accounts</p>
+          </div>
+
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition"
+          >
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-slate-500">Active Users</p>
+              <span class="text-2xl">🟢</span>
+            </div>
+            <p id="activeUsers" class="text-3xl font-bold text-green-700 mt-4">
+              —
+            </p>
+            <p class="text-xs text-slate-400 mt-2">Active accounts</p>
+          </div>
+
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition"
+          >
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-slate-500">Inactive Users</p>
+              <span class="text-2xl">🔴</span>
+            </div>
+            <p id="inactiveUsers" class="text-3xl font-bold text-red-600 mt-4">
+              —
+            </p>
+            <p class="text-xs text-slate-400 mt-2">Deactivated accounts</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Legal Resources -->
+      <section class="mt-10">
+        <h2 class="text-lg font-bold text-[#001233] mb-5">Legal Resources</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm"
+          >
+            <p class="text-sm text-slate-500">Courts</p>
+            <p id="totalCourts" class="text-3xl font-bold text-[#001233] mt-3">
+              —
+            </p>
+          </div>
+
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm"
+          >
+            <p class="text-sm text-slate-500">Judges</p>
+            <p id="totalJudges" class="text-3xl font-bold text-[#001233] mt-3">
+              —
+            </p>
+          </div>
+
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm"
+          >
+            <p class="text-sm text-slate-500">Legal Topics</p>
+            <p id="totalTopics" class="text-3xl font-bold text-[#001233] mt-3">
+              —
+            </p>
+          </div>
+
+          <div
+            class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm"
+          >
+            <p class="text-sm text-slate-500">Legislation</p>
+            <p
+              id="totalLegislation"
+              class="text-3xl font-bold text-[#001233] mt-3"
+            >
+              —
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent Case Activity -->
+      <section class="mt-10">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+          <div>
+            <h2 class="text-lg font-bold text-[#001233]">
+              Recent Case Activity
+            </h2>
+            <p class="text-sm text-slate-500 mt-1">
+              Latest activities performed on case records
+            </p>
+          </div>
+
+          <button
+            id="refreshActivityButton"
+            type="button"
+            class="border border-slate-300 hover:bg-slate-50 text-[#001233] px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            ↻ Refresh Activity
+          </button>
+        </div>
+
+        <div
+          class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden"
+        >
+          <div class="max-h-[480px] overflow-y-auto overflow-x-auto">
+            <table class="w-full text-sm text-left">
+              <thead
+                class="bg-slate-50 text-slate-600 border-b sticky top-0 z-10"
+              >
+                <tr>
+                  <th class="px-5 py-4 font-semibold">Activity</th>
+                  <th class="px-5 py-4 font-semibold">Description</th>
+                  <th class="px-5 py-4 font-semibold">Performed By</th>
+                  <th class="px-5 py-4 font-semibold">Date & Time</th>
+                </tr>
+              </thead>
+
+              <tbody id="recentActivityTableBody">
+                <tr>
+                  <td colspan="4" class="px-5 py-8 text-center text-slate-500">
+                    Loading activities...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pending Case Revisions -->
+<section class="mt-10" id="pendingRevisionsSection">
+    <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+        <div>
+            <h2 class="text-lg font-bold text-[#001233]">
+                Pending Case Revisions
+            </h2>
+            <p class="text-sm text-slate-500 mt-1">
+                Review changes submitted by Editors to published cases
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <span id="pendingRevisionCount"
+                class="bg-amber-100 text-amber-800 px-3 py-2 rounded-lg text-sm font-semibold">
+                0 Pending
+            </span>
+
+            <button
+                id="refreshRevisionsButton"
+                type="button"
+                class="border border-slate-300 hover:bg-slate-50 text-[#001233] px-4 py-2 rounded-lg text-sm font-medium">
+                ↻ Refresh
+            </button>
+        </div>
+    </div>
+
+    <div id="revisionMessage"
+        class="hidden rounded-lg p-4 mb-5 text-sm"
+        role="alert">
+    </div>
+
+    <div id="pendingRevisionsContainer" class="space-y-5">
+        <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+            Loading pending revisions...
+        </div>
+    </div>
+</section>
+      <!-- Quick Access -->
+      <section class="mt-10">
+        <h2 class="text-lg font-bold text-[#001233] mb-5">Quick Access</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <a
+            href="./admin-cases.html"
+            class="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-400 hover:shadow-md transition"
+          >
+            <span class="text-2xl">⚖️</span>
+            <h3 class="font-semibold text-[#001233] mt-3">Case Management</h3>
+            <p class="text-sm text-slate-500 mt-2">
+              Create and manage case records
+            </p>
+          </a>
+
+          <a
+            href="./admin-users.html"
+            class="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-400 hover:shadow-md transition"
+          >
+            <span class="text-2xl">👥</span>
+            <h3 class="font-semibold text-[#001233] mt-3">User Management</h3>
+            <p class="text-sm text-slate-500 mt-2">
+              Manage LEXBD user accounts
+            </p>
+          </a>
+
+          <a
+            href="./index.html"
+            class="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-400 hover:shadow-md transition"
+          >
+            <span class="text-2xl">🌐</span>
+            <h3 class="font-semibold text-[#001233] mt-3">Public Website</h3>
+            <p class="text-sm text-slate-500 mt-2">
+              Visit the public case directory
+            </p>
+          </a>
+
+          <a
+            href="./admin-sessions.html"
+            class="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-400 hover:shadow-md transition"
+          >
+            <span class="text-2xl">🔐</span>
+            <h3 class="font-semibold text-[#001233] mt-3">
+              Session Management
+            </h3>
+            <p class="text-sm text-slate-500 mt-2">
+              Monitor and revoke Editor and User sessions
+            </p>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="text-center text-slate-500 text-sm py-8">
+      © <span id="currentYear"></span> LEXBD. All rights reserved.
+    </footer>
+
+    <script src="./js/api.js"></script>
+    <script src="./js/admin-dashboard.js"></script>
+  </body>
+</html>

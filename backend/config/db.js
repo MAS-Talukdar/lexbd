@@ -1,29 +1,61 @@
 
-import mongoose from "mongoose";
+import pg from "pg";
+
+const { Pool } = pg;
+
+let pool;
 
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI;
-
-    if (!mongoURI) {
-      console.warn(
-        "MongoDB URI not found. Running without database."
-      );
-
-      return false;
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL is missing from .env file");
     }
 
-    await mongoose.connect(mongoURI);
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: true
+      },
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000
+    });
 
-    console.log("MongoDB connected successfully!");
+    pool.on("error", (error) => {
+      console.error("Unexpected PostgreSQL pool error:", error.message);
+    });
 
-    return true;
+    const result = await pool.query(`
+      SELECT
+        NOW() AS current_time,
+        current_database() AS database_name
+    `);
+
+    console.log("PostgreSQL connected successfully!");
+    console.log("Database:", result.rows[0].database_name);
+    console.log("Database time:", result.rows[0].current_time);
+
+    return pool;
 
   } catch (error) {
-    console.error("MongoDB connection failed:", error.message);
+    console.error("PostgreSQL connection failed!");
+    console.error(error.message);
+
+    if (pool) {
+      await pool.end().catch(() => {});
+      pool = null;
+    }
 
     throw error;
   }
+};
+
+export const getPool = () => {
+  if (!pool) {
+    throw new Error("PostgreSQL pool is not initialized");
+  }
+
+  return pool;
 };
 
 export default connectDB;

@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Case | LEXBD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-100 min-h-screen">
+
+    <header class="bg-slate-900 text-white px-6 py-4">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">LEXBD | Editor</h1>
+            <a href="./editor-dashboard.html"
+               class="text-sm hover:underline">
+                Back to Dashboard
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-5 md:p-8">
+
+        <div class="bg-white rounded-xl shadow-sm p-6 md:p-8">
+
+            <h2 id="formTitle" class="text-2xl font-bold text-slate-800 mb-2">
+                Add New Case
+            </h2>
+
+            <p class="text-sm text-slate-500 mb-6">
+                New cases are automatically saved as Draft.
+            </p>
+
+            <div id="message"
+                 class="hidden mb-5 p-3 rounded-lg text-sm">
+            </div>
+
+            <form id="caseForm" class="space-y-5">
+
+                <div>
+                    <label class="block font-medium mb-2">Case Title *</label>
+                    <input type="text" id="title" required
+                           class="w-full border rounded-lg p-3"
+                           placeholder="Enter case title">
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-5">
+
+                    <div>
+                        <label class="block font-medium mb-2">Case Number</label>
+                        <input type="text" id="case_number"
+                               class="w-full border rounded-lg p-3">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium mb-2">Citation</label>
+                        <input type="text" id="citation"
+                               class="w-full border rounded-lg p-3">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium mb-2">Petitioner</label>
+                        <input type="text" id="petitioner"
+                               class="w-full border rounded-lg p-3">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium mb-2">Respondent</label>
+                        <input type="text" id="respondent"
+                               class="w-full border rounded-lg p-3">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium mb-2">Court ID</label>
+                        <input type="number" id="court_id" min="1"
+                               class="w-full border rounded-lg p-3">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium mb-2">Decision Year</label>
+                        <input type="number" id="decision_year"
+                               min="1800" max="2200"
+                               class="w-full border rounded-lg p-3">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium mb-2">Decision Date</label>
+                        <input type="date" id="decision_date"
+                               class="w-full border rounded-lg p-3">
+                    </div>
+
+                </div>
+
+                <div>
+                    <label class="block font-medium mb-2">Judgment Text</label>
+                    <textarea id="judgment_text" rows="12"
+                              class="w-full border rounded-lg p-3"
+                              placeholder="Enter full judgment text"></textarea>
+                </div>
+
+                <div>
+                    <label class="block font-medium mb-2">PDF URL</label>
+                    <input type="url" id="pdf_url"
+                           class="w-full border rounded-lg p-3"
+                           placeholder="https://example.com/judgment.pdf">
+                </div>
+
+                <div>
+                    <label class="block font-medium mb-2">Source URL</label>
+                    <input type="url" id="source_url"
+                           class="w-full border rounded-lg p-3"
+                           placeholder="https://example.com/source">
+                </div>
+
+                <div class="flex flex-wrap gap-3 pt-4">
+
+                    <button type="submit" id="saveButton"
+                            class="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800">
+                        Save Draft
+                    </button>
+
+                    <a href="./editor-dashboard.html"
+                       class="bg-slate-200 px-6 py-3 rounded-lg font-semibold">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+        </div>
+
+    </main>
+
+    <script src="./js/editor-case-form.js"></script>
+
+</body>
+</html>
