@@ -1,5 +1,5 @@
 
-const API_BASE_URL = "https://lexbd-backend.onrender.com/api";
+const API_BASE_URL = "/api";
 
 const caseForm = document.getElementById("caseForm");
 const messageBox = document.getElementById("message");

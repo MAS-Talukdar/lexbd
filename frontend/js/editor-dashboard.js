@@ -1,5 +1,4 @@
-
-const API_BASE_URL = "https://lexbd-backend.onrender.com/api";
+const API_BASE_URL = "/api";
 
 const editorName = document.getElementById("editorName");
 const welcomeName = document.getElementById("welcomeName");
