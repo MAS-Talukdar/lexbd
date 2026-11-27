@@ -1,257 +1,472 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Case Management | LEXBD</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="./css/style.css">
-</head>
+    <link rel="stylesheet" href="./css/style.css" />
 
-<body class="bg-slate-100 min-h-screen">
+    <!-- Quill Rich Text Editor -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
+      rel="stylesheet"
+    />
 
-<header class="bg-[#001233] text-white">
-    <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+    <style>
+      #judgmentEditor {
+        min-height: 350px;
+        background: white;
+        font-size: 15px;
+      }
+
+      #judgmentEditor .ql-editor {
+        min-height: 350px;
+        line-height: 1.7;
+      }
+
+      .ql-toolbar.ql-snow {
+        border-radius: 8px 8px 0 0;
+        background: #f8fafc;
+      }
+
+      #judgmentEditor.ql-container.ql-snow {
+        border-radius: 0 0 8px 8px;
+      }
+
+      .topic-checkbox {
+        accent-color: #001233;
+      }
+    </style>
+  </head>
+
+  <body class="bg-slate-100 min-h-screen">
+    <header class="bg-[#001233] text-white">
+      <div
+        class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center"
+      >
         <div>
-            <a href="./index.html" class="text-2xl font-bold">LEXBD</a>
-            <p class="text-xs text-slate-300 mt-1">Case Management</p>
+          <a href="./index.html" class="text-2xl font-bold">LEXBD</a>
+          <p class="text-xs text-slate-300 mt-1">Case Management</p>
         </div>
 
-        <button id="logoutButton"
-            class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm">
-            Logout
+        <button
+          id="logoutButton"
+          type="button"
+          class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm"
+        >
+          Logout
         </button>
-    </div>
-</header>
+      </div>
+    </header>
 
-<main class="max-w-7xl mx-auto px-6 py-10">
-
-    <div class="mb-8">
-        <a href="./admin-dashboard.html"
-           class="text-sm text-blue-700 hover:underline">
-            ← Back to Dashboard
+    <main class="max-w-7xl mx-auto px-6 py-10">
+      <div class="mb-8">
+        <a
+          href="./admin-dashboard.html"
+          class="text-sm text-blue-700 hover:underline"
+        >
+          ← Back to Dashboard
         </a>
 
         <div class="flex flex-wrap justify-between items-center gap-4 mt-5">
-            <div>
-                <h1 class="text-3xl font-bold text-[#001233]">
-                    Case Management
-                </h1>
-                <p class="text-slate-500 mt-2">
-                    Create, edit and manage case records.
-                </p>
-            </div>
+          <div>
+            <h1 class="text-3xl font-bold text-[#001233]">Case Management</h1>
+            <p class="text-slate-500 mt-2">
+              Create, edit and manage case records.
+            </p>
+          </div>
 
-            <button id="showCreateForm"
-                class="bg-[#001233] hover:bg-blue-950 text-white px-5 py-3 rounded-lg">
-                + Add New Case
-            </button>
+          <button
+            id="showCreateForm"
+            type="button"
+            class="bg-[#001233] hover:bg-blue-950 text-white px-5 py-3 rounded-lg"
+          >
+            + Add New Case
+          </button>
         </div>
-    </div>
+      </div>
 
-    <div id="caseMessage"
-         class="hidden rounded-lg p-4 mb-6 text-sm"
-         role="alert"
-         aria-live="polite">
-    </div>
+      <div
+        id="caseMessage"
+        class="hidden rounded-lg p-4 mb-6 text-sm"
+        role="alert"
+        aria-live="polite"
+      ></div>
 
-    <!-- Create / Edit Form -->
-    <section id="caseFormSection"
-        class="hidden bg-white border border-slate-200 rounded-xl p-6 mb-8">
-
+      <!-- Create / Edit Form -->
+      <section
+        id="caseFormSection"
+        class="hidden bg-white border border-slate-200 rounded-xl p-6 mb-8"
+      >
         <div class="flex justify-between items-center mb-6">
-            <h2 id="formTitle" class="text-xl font-bold text-[#001233]">
-                Add New Case
-            </h2>
+          <h2 id="formTitle" class="text-xl font-bold text-[#001233]">
+            Add New Case
+          </h2>
 
-            <button id="closeCaseForm"
-                type="button"
-                class="text-slate-500 hover:text-red-600 text-xl">
-                ×
-            </button>
+          <button
+            id="closeCaseForm"
+            type="button"
+            class="text-slate-500 hover:text-red-600 text-xl"
+          >
+            ×
+          </button>
         </div>
 
         <form id="caseForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <input type="hidden" id="caseId" />
 
-            <input type="hidden" id="caseId">
+          <!-- Case Title -->
+          <div class="md:col-span-2">
+            <label for="title" class="block text-sm font-medium mb-2">
+              Case Title *
+            </label>
 
-            <div class="md:col-span-2">
-                <label for="title" class="block text-sm font-medium mb-2">
-                    Case Title *
-                </label>
-                <input id="title" required maxlength="500"
-                    class="w-full border rounded-lg px-4 py-3"
-                    placeholder="Enter case title">
+            <input
+              id="title"
+              required
+              maxlength="500"
+              class="w-full border rounded-lg px-4 py-3"
+              placeholder="Enter case title"
+            />
+          </div>
+
+          <!-- Case Number -->
+          <div>
+            <label for="caseNumber" class="block text-sm font-medium mb-2">
+              Case Number
+            </label>
+
+            <input
+              id="caseNumber"
+              maxlength="150"
+              class="w-full border rounded-lg px-4 py-3"
+              placeholder="Enter case number"
+            />
+          </div>
+
+          <!-- Citation -->
+          <div>
+            <label for="citation" class="block text-sm font-medium mb-2">
+              Citation
+            </label>
+
+            <input
+              id="citation"
+              maxlength="250"
+              class="w-full border rounded-lg px-4 py-3"
+              placeholder="Enter citation"
+            />
+          </div>
+
+          <!-- Petitioner -->
+          <div>
+            <label for="petitioner" class="block text-sm font-medium mb-2">
+              Petitioner
+            </label>
+
+            <input
+              id="petitioner"
+              maxlength="500"
+              class="w-full border rounded-lg px-4 py-3"
+              placeholder="Enter petitioner"
+            />
+          </div>
+
+          <!-- Respondent -->
+          <div>
+            <label for="respondent" class="block text-sm font-medium mb-2">
+              Respondent
+            </label>
+
+            <input
+              id="respondent"
+              maxlength="500"
+              class="w-full border rounded-lg px-4 py-3"
+              placeholder="Enter respondent"
+            />
+          </div>
+
+          <!-- Court ID -->
+          <div>
+            <label for="courtId" class="block text-sm font-medium mb-2">
+              Court ID
+            </label>
+
+            <input
+              id="courtId"
+              type="number"
+              min="1"
+              class="w-full border rounded-lg px-4 py-3"
+              placeholder="Enter Court ID"
+            />
+          </div>
+
+          <!-- Decision Year -->
+          <div>
+            <label for="decisionYear" class="block text-sm font-medium mb-2">
+              Decision Year
+            </label>
+
+            <input
+              id="decisionYear"
+              type="number"
+              min="1800"
+              max="2200"
+              class="w-full border rounded-lg px-4 py-3"
+              placeholder="e.g. 2024"
+            />
+          </div>
+
+          <!-- Decision Date -->
+          <div>
+            <label for="decisionDate" class="block text-sm font-medium mb-2">
+              Decision Date
+            </label>
+
+            <input
+              id="decisionDate"
+              type="date"
+              class="w-full border rounded-lg px-4 py-3"
+            />
+          </div>
+
+          <!-- Source URL -->
+          <div>
+            <label for="sourceUrl" class="block text-sm font-medium mb-2">
+              Original Source URL
+            </label>
+
+            <input
+              id="sourceUrl"
+              type="url"
+              maxlength="2000"
+              class="w-full border rounded-lg px-4 py-3"
+              placeholder="https://example.com"
+            />
+          </div>
+
+          <!-- Case Classification -->
+          <div class="md:col-span-2 border border-slate-200 rounded-xl p-5">
+            <div class="mb-5">
+              <h3 class="text-lg font-bold text-[#001233]">
+                Case Classification
+              </h3>
+
+              <p class="text-sm text-slate-500 mt-1">
+                Assign one primary legal subject and relevant legal topics.
+              </p>
             </div>
 
+            <!-- Primary Legal Subject -->
+            <div class="mb-5">
+              <label for="legalSubject" class="block text-sm font-medium mb-2">
+                Primary Legal Subject *
+              </label>
+
+              <select
+                id="legalSubject"
+                class="w-full border rounded-lg px-4 py-3"
+                required
+              >
+                <option value="">Select a legal subject</option>
+              </select>
+
+              <p class="text-xs text-slate-500 mt-2">
+                Select the main area of law relevant to this case.
+              </p>
+            </div>
+
+            <!-- Legal Topics -->
             <div>
-                <label for="caseNumber" class="block text-sm font-medium mb-2">
-                    Case Number
-                </label>
-                <input id="caseNumber" maxlength="150"
-                    class="w-full border rounded-lg px-4 py-3"
-                    placeholder="Enter case number">
+              <div
+                class="flex flex-wrap justify-between items-center gap-2 mb-3"
+              >
+                <label class="block text-sm font-medium"> Legal Topics </label>
+
+                <span
+                  id="selectedTopicsCount"
+                  class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full"
+                >
+                  0 selected
+                </span>
+              </div>
+
+              <div
+                id="legalTopicsContainer"
+                class="border rounded-lg p-4 min-h-16 bg-slate-50"
+              >
+                <p class="text-sm text-slate-500">
+                  Select a legal subject to view its topics.
+                </p>
+              </div>
+
+              <p class="text-xs text-slate-500 mt-2">
+                You can select multiple topics for a single case.
+              </p>
+            </div>
+          </div>
+
+          <!-- Judgment Text Editor -->
+          <div class="md:col-span-2">
+            <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
+              <div>
+                <label class="block text-sm font-medium"> Judgment Text </label>
+
+                <p class="text-xs text-slate-500 mt-1">
+                  Use the formatting toolbar to prepare the judgment.
+                </p>
+              </div>
+
+              <span id="judgmentWordCount" class="text-xs text-slate-500">
+                0 words
+              </span>
             </div>
 
-            <div>
-                <label for="citation" class="block text-sm font-medium mb-2">
-                    Citation
-                </label>
-                <input id="citation" maxlength="250"
-                    class="w-full border rounded-lg px-4 py-3"
-                    placeholder="Enter citation">
+            <!-- Quill Toolbar -->
+            <div id="judgmentToolbar">
+              <span class="ql-formats">
+                <select class="ql-header">
+                  <option selected></option>
+                  <option value="1"></option>
+                  <option value="2"></option>
+                  <option value="3"></option>
+                </select>
+
+                <select class="ql-size">
+                  <option value="small"></option>
+                  <option selected></option>
+                  <option value="large"></option>
+                  <option value="huge"></option>
+                </select>
+              </span>
+
+              <span class="ql-formats">
+                <button class="ql-bold"></button>
+                <button class="ql-italic"></button>
+                <button class="ql-underline"></button>
+                <button class="ql-strike"></button>
+              </span>
+
+              <span class="ql-formats">
+                <select class="ql-color"></select>
+                <select class="ql-background"></select>
+              </span>
+
+              <span class="ql-formats">
+                <button class="ql-list" value="ordered"></button>
+                <button class="ql-list" value="bullet"></button>
+                <button class="ql-indent" value="-1"></button>
+                <button class="ql-indent" value="+1"></button>
+              </span>
+
+              <span class="ql-formats">
+                <select class="ql-align"></select>
+                <button class="ql-blockquote"></button>
+              </span>
+
+              <span class="ql-formats">
+                <button class="ql-link"></button>
+                <button class="ql-clean"></button>
+              </span>
             </div>
 
-            <div>
-                <label for="petitioner" class="block text-sm font-medium mb-2">
-                    Petitioner
-                </label>
-                <input id="petitioner" maxlength="500"
-                    class="w-full border rounded-lg px-4 py-3"
-                    placeholder="Enter petitioner">
-            </div>
+            <!-- Rich Text Editor -->
+            <div id="judgmentEditor"></div>
 
-            <div>
-                <label for="respondent" class="block text-sm font-medium mb-2">
-                    Respondent
-                </label>
-                <input id="respondent" maxlength="500"
-                    class="w-full border rounded-lg px-4 py-3"
-                    placeholder="Enter respondent">
-            </div>
+            <!-- Preserve existing JavaScript field ID -->
+            <textarea id="judgmentText" class="hidden"></textarea>
+          </div>
 
-            <div>
-                <label for="courtId" class="block text-sm font-medium mb-2">
-                    Court ID
-                </label>
-                <input id="courtId" type="number" min="1"
-                    class="w-full border rounded-lg px-4 py-3"
-                    placeholder="Enter Court ID">
-            </div>
-
-            <div>
-                <label for="decisionYear" class="block text-sm font-medium mb-2">
-                    Decision Year
-                </label>
-                <input id="decisionYear" type="number" min="1800" max="2200"
-                    class="w-full border rounded-lg px-4 py-3"
-                    placeholder="e.g. 2024">
-            </div>
-
-            <div>
-                <label for="decisionDate" class="block text-sm font-medium mb-2">
-                    Decision Date
-                </label>
-                <input id="decisionDate" type="date"
-                    class="w-full border rounded-lg px-4 py-3">
-            </div>
-
-            <div>
-                <label for="sourceUrl" class="block text-sm font-medium mb-2">
-                    Original Source URL
-                </label>
-                <input id="sourceUrl" type="url" maxlength="2000"
-                    class="w-full border rounded-lg px-4 py-3"
-                    placeholder="https://example.com">
-            </div>
-
-            <div class="md:col-span-2">
-                <label for="judgmentText" class="block text-sm font-medium mb-2">
-                    Judgment Text
-                </label>
-                <textarea id="judgmentText" rows="12"
-                    class="w-full border rounded-lg px-4 py-3"
-                    placeholder="Enter the full judgment text..."></textarea>
-            </div>
-
-            <div class="md:col-span-2 flex flex-wrap gap-3">
-                <button type="submit" id="saveCaseButton"
-                    class="bg-[#001233] hover:bg-blue-950 text-white px-6 py-3 rounded-lg">
-                    Save Case
-                </button>
-
-                <button type="button" id="cancelCaseForm"
-                    class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3 rounded-lg">
-                    Cancel
-                </button>
-            </div>
-
-        </form>
-    </section>
-
-    <!-- Search and Filter -->
-    <section class="bg-white border border-slate-200 rounded-xl p-5 mb-6">
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-            <input id="searchCasesInput"
-                type="search"
-                placeholder="Search cases..."
-                class="border rounded-lg px-4 py-3">
-
-            <select id="statusFilter"
-                class="border rounded-lg px-4 py-3">
-                <option value="">All Statuses</option>
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-            </select>
-
-            <button id="refreshCases"
-                class="bg-slate-200 hover:bg-slate-300 rounded-lg px-4 py-3">
-                Refresh Cases
+          <!-- Form Actions -->
+          <div class="md:col-span-2 flex flex-wrap gap-3 pt-3">
+            <button
+              type="submit"
+              id="saveCaseButton"
+              class="bg-[#001233] hover:bg-blue-950 text-white px-6 py-3 rounded-lg"
+            >
+              Save Case
             </button>
 
+            <button
+              type="button"
+              id="cancelCaseForm"
+              class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3 rounded-lg"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Search and Filter -->
+      <section class="bg-white border border-slate-200 rounded-xl p-5 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <input
+            id="searchCasesInput"
+            type="search"
+            placeholder="Search cases..."
+            class="border rounded-lg px-4 py-3"
+          />
+
+          <select id="statusFilter" class="border rounded-lg px-4 py-3">
+            <option value="">All Statuses</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="archived">Archived</option>
+          </select>
+
+          <button
+            id="refreshCases"
+            type="button"
+            class="bg-slate-200 hover:bg-slate-300 rounded-lg px-4 py-3"
+          >
+            Refresh Cases
+          </button>
         </div>
+      </section>
 
-    </section>
-
-    <!-- Cases Table -->
-    <section class="bg-white border border-slate-200 rounded-xl overflow-hidden">
-
+      <!-- Cases Table -->
+      <section
+        class="bg-white border border-slate-200 rounded-xl overflow-hidden"
+      >
         <div class="p-6 border-b border-slate-200">
-            <h2 class="text-lg font-bold text-[#001233]">
-                All Case Records
-            </h2>
+          <h2 class="text-lg font-bold text-[#001233]">All Case Records</h2>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-slate-50 text-slate-600">
+              <tr>
+                <th class="px-5 py-4">Title</th>
+                <th class="px-5 py-4">Citation</th>
+                <th class="px-5 py-4">Year</th>
+                <th class="px-5 py-4">Status</th>
+                <th class="px-5 py-4">Actions</th>
+              </tr>
+            </thead>
 
-                <thead class="bg-slate-50 text-slate-600">
-                    <tr>
-                        <th class="px-5 py-4">Title</th>
-                        <th class="px-5 py-4">Citation</th>
-                        <th class="px-5 py-4">Year</th>
-                        <th class="px-5 py-4">Status</th>
-                        <th class="px-5 py-4">Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody id="casesTableBody">
-                    <tr>
-                        <td colspan="5"
-                            class="px-5 py-10 text-center text-slate-500">
-                            Loading cases...
-                        </td>
-                    </tr>
-                </tbody>
-
-            </table>
+            <tbody id="casesTableBody">
+              <tr>
+                <td colspan="5" class="px-5 py-10 text-center text-slate-500">
+                  Loading cases...
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+      </section>
+    </main>
 
-    </section>
+    <footer class="text-center text-slate-500 text-sm py-8">
+      © <span id="currentYear"></span> LEXBD. All rights reserved.
+    </footer>
 
-</main>
+    <!-- Quill JS must load before admin-cases.js -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
-<footer class="text-center text-slate-500 text-sm py-8">
-    © <span id="currentYear"></span> LEXBD. All rights reserved.
-</footer>
-
-<script src="./js/api.js"></script>
-<script src="./js/admin-cases.js"></script>
-
-</body>
+    <script src="./js/api.js"></script>
+    <script src="./js/admin-cases.js"></script>
+  </body>
 </html>

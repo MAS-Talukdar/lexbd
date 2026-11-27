@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Classification Management | LEXBD</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+    <header class="bg-slate-900 text-white px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            <div>
+                <h1 class="text-xl font-bold">LEXBD</h1>
+                <p class="text-sm text-slate-300">Legal Classification Management</p>
+            </div>
+
+            <div class="flex gap-3">
+                <a href="./admin-cases.html"
+                   class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm">
+                    Case Management
+                </a>
+
+                <button id="logoutButton"
+                        class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-6">
+
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-slate-800">
+                Legal Classification
+            </h2>
+
+            <p class="text-gray-600 mt-1">
+                Manage Legal Subjects and their Topics.
+            </p>
+        </div>
+
+        <div id="pageMessage"
+             class="hidden mb-5 p-3 rounded text-sm">
+        </div>
+
+        <!-- Create / Edit Form -->
+        <section class="bg-white rounded-lg shadow p-6 mb-8">
+
+            <h3 id="formTitle" class="text-lg font-semibold mb-5">
+                Create New Classification
+            </h3>
+
+            <form id="classificationForm" class="space-y-4">
+
+                <input type="hidden" id="classificationId">
+
+                <div>
+                    <label for="classificationType"
+                           class="block text-sm font-medium mb-1">
+                        Classification Type
+                    </label>
+
+                    <select id="classificationType"
+                            class="w-full border rounded-lg p-3"
+                            required>
+                        <option value="subject">Legal Subject</option>
+                        <option value="topic">Legal Topic</option>
+                    </select>
+                </div>
+
+                <div id="parentSubjectContainer" class="hidden">
+                    <label for="parentSubject"
+                           class="block text-sm font-medium mb-1">
+                        Parent Legal Subject
+                    </label>
+
+                    <select id="parentSubject"
+                            class="w-full border rounded-lg p-3">
+                        <option value="">Select a Subject</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="classificationName"
+                           class="block text-sm font-medium mb-1">
+                        Name
+                    </label>
+
+                    <input type="text"
+                           id="classificationName"
+                           maxlength="200"
+                           required
+                           placeholder="Enter classification name"
+                           class="w-full border rounded-lg p-3">
+                </div>
+
+                <div>
+                    <label for="classificationDescription"
+                           class="block text-sm font-medium mb-1">
+                        Description
+                    </label>
+
+                    <textarea id="classificationDescription"
+                              rows="3"
+                              placeholder="Optional description"
+                              class="w-full border rounded-lg p-3"></textarea>
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <button type="submit"
+                            id="saveButton"
+                            class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded-lg">
+                        Save Classification
+                    </button>
+
+                    <button type="button"
+                            id="cancelEditButton"
+                            class="hidden bg-gray-200 hover:bg-gray-300 px-5 py-2 rounded-lg">
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+        </section>
+
+        <!-- Classification List -->
+        <section class="bg-white rounded-lg shadow p-6">
+
+            <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+                <h3 class="text-lg font-semibold">
+                    Existing Classifications
+                </h3>
+
+                <button id="refreshButton"
+                        class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
+                    Refresh
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+
+                <table class="w-full text-sm text-left">
+
+                    <thead class="bg-slate-100 text-slate-700">
+                        <tr>
+                            <th class="p-3">Name</th>
+                            <th class="p-3">Type</th>
+                            <th class="p-3">Parent Subject</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="classificationsTableBody">
+                        <tr>
+                            <td colspan="5"
+                                class="p-5 text-center text-gray-500">
+                                Loading classifications...
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="./js/api.js"></script>
+    <script src="./js/admin-classifications.js"></script>
+
+</body>
+</html>

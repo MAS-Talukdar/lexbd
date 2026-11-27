@@ -1,14 +1,77 @@
-
 const caseForm = document.getElementById("caseForm");
 const caseFormSection = document.getElementById("caseFormSection");
 const casesTableBody = document.getElementById("casesTableBody");
 const caseMessage = document.getElementById("caseMessage");
 const saveCaseButton = document.getElementById("saveCaseButton");
 
-let currentCases = [];
+const legalSubjectSelect = document.getElementById("legalSubject");
+const legalTopicsContainer = document.getElementById("legalTopicsContainer");
+const selectedTopicsCount = document.getElementById("selectedTopicsCount");
+const judgmentTextField = document.getElementById("judgmentText");
+const judgmentWordCount = document.getElementById("judgmentWordCount");
 
-document.getElementById("currentYear").textContent =
-  new Date().getFullYear();
+let currentCases = [];
+let legalTopics = [];
+let quillEditor = null;
+let currentRelations = {
+  judges: [],
+  topics: [],
+  legislation: [],
+};
+
+document.getElementById("currentYear").textContent = new Date().getFullYear();
+
+// =====================================
+// JUDGMENT EDITOR INITIALIZATION
+// =====================================
+
+function initializeJudgmentEditor() {
+  if (typeof Quill === "undefined") {
+    throw new Error("Judgment Editor library could not be loaded.");
+  }
+
+  if (quillEditor) return;
+
+  quillEditor = new Quill("#judgmentEditor", {
+    theme: "snow",
+    modules: {
+      toolbar: "#judgmentToolbar",
+    },
+    placeholder: "Enter the full judgment text...",
+  });
+
+  quillEditor.on("text-change", syncJudgmentText);
+
+  syncJudgmentText();
+}
+
+function syncJudgmentText() {
+  if (!quillEditor) return;
+
+  const html = quillEditor.getSemanticHTML();
+
+  judgmentTextField.value = quillEditor.getText().trim().length > 0 ? html : "";
+
+  const text = quillEditor.getText().trim();
+
+  const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+
+  judgmentWordCount.textContent = `${words} words`;
+}
+
+function setJudgmentText(value) {
+  if (!quillEditor) return;
+
+  const content = String(value ?? "");
+
+  quillEditor.setText("");
+
+  if (content.trim()) {
+    quillEditor.clipboard.dangerouslyPasteHTML(content);
+  }
+
+  syncJudgmentText();
+}
 
 // =====================================
 // MESSAGE
@@ -20,7 +83,7 @@ function showCaseMessage(message, type = "error") {
 
   caseMessage.classList.add(
     type === "success" ? "bg-green-50" : "bg-red-50",
-    type === "success" ? "text-green-700" : "text-red-700"
+    type === "success" ? "text-green-700" : "text-red-700",
   );
 }
 
@@ -63,6 +126,192 @@ function getStatusBadge(status) {
 }
 
 // =====================================
+// LEGAL CLASSIFICATION
+// =====================================
+
+async function loadLegalTopics() {
+  const response = await apiRequest("/admin/cases/topics");
+
+  if (!response.success) {
+    throw new Error(response.message || "Could not load legal classification.");
+  }
+
+  legalTopics = Array.isArray(response.topics) ? response.topics : [];
+
+  renderLegalSubjects();
+}
+
+function getLegalSubjects() {
+  return legalTopics.filter(
+    (item) => item.parent_id === null || item.parent_id === undefined,
+  );
+}
+
+function getTopicsForSubject(subjectId) {
+  return legalTopics.filter(
+    (item) => Number(item.parent_id) === Number(subjectId),
+  );
+}
+
+function renderLegalSubjects(selectedSubjectId = "") {
+  const subjects = getLegalSubjects();
+
+  legalSubjectSelect.innerHTML = `
+    <option value="">Select a legal subject</option>
+    ${subjects
+      .map(
+        (subject) => `
+      <option value="${escapeHTML(subject.id)}">
+        ${escapeHTML(subject.name)}
+      </option>
+    `,
+      )
+      .join("")}
+  `;
+
+  legalSubjectSelect.value = selectedSubjectId ? String(selectedSubjectId) : "";
+
+  renderLegalTopics();
+}
+
+function renderLegalTopics(selectedTopicIds = []) {
+  const subjectId = legalSubjectSelect.value;
+
+  const selectedIds = new Set(selectedTopicIds.map(Number));
+
+  if (!subjectId) {
+    legalTopicsContainer.innerHTML = `
+      <p class="text-sm text-slate-500">
+        Select a legal subject to view its topics.
+      </p>
+    `;
+
+    updateSelectedTopicsCount();
+    return;
+  }
+
+  const topics = getTopicsForSubject(subjectId);
+
+  if (!topics.length) {
+    legalTopicsContainer.innerHTML = `
+      <p class="text-sm text-slate-500">
+        No topics are available under this subject yet.
+      </p>
+    `;
+
+    updateSelectedTopicsCount();
+    return;
+  }
+
+  legalTopicsContainer.innerHTML = `
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      ${topics
+        .map(
+          (topic) => `
+        <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+          <input
+            type="checkbox"
+            class="topic-checkbox"
+            name="legalTopic"
+            value="${escapeHTML(topic.id)}"
+            ${selectedIds.has(Number(topic.id)) ? "checked" : ""}
+          >
+
+          <span>${escapeHTML(topic.name)}</span>
+        </label>
+      `,
+        )
+        .join("")}
+    </div>
+  `;
+
+  updateSelectedTopicsCount();
+}
+
+function getSelectedTopicIds() {
+  const subjectId = legalSubjectSelect.value;
+
+  if (!subjectId) return [];
+
+  // Store the parent Subject ID together with selected child Topic IDs.
+  const selectedIds = [
+    Number(subjectId),
+    ...Array.from(
+      legalTopicsContainer.querySelectorAll('input[name="legalTopic"]:checked'),
+    ).map((input) => Number(input.value)),
+  ];
+
+  return [...new Set(selectedIds)];
+}
+
+function updateSelectedTopicsCount() {
+  const count = legalTopicsContainer.querySelectorAll(
+    'input[name="legalTopic"]:checked',
+  ).length;
+
+  selectedTopicsCount.textContent = `${count} selected`;
+}
+
+function resetClassification() {
+  legalSubjectSelect.value = "";
+  renderLegalTopics();
+}
+
+function loadCaseClassification(topicIds = []) {
+  const ids = topicIds.map(Number);
+
+  let subjectId = null;
+
+  // First, check whether the parent Subject ID is already linked.
+  const selectedSubject = legalTopics.find(
+    (item) =>
+      (item.parent_id === null || item.parent_id === undefined) &&
+      ids.includes(Number(item.id)),
+  );
+
+  if (selectedSubject) {
+    subjectId = Number(selectedSubject.id);
+  } else {
+    // Otherwise, identify the Subject from a selected child Topic.
+    const selectedChild = legalTopics.find(
+      (item) =>
+        item.parent_id !== null &&
+        item.parent_id !== undefined &&
+        ids.includes(Number(item.id)),
+    );
+
+    if (selectedChild) {
+      subjectId = Number(selectedChild.parent_id);
+    }
+  }
+
+  if (!subjectId) {
+    resetClassification();
+    return;
+  }
+
+  const selectedChildIds = ids.filter((id) => {
+    const topic = legalTopics.find((item) => Number(item.id) === id);
+
+    return topic && Number(topic.parent_id) === subjectId;
+  });
+
+  legalSubjectSelect.value = String(subjectId);
+
+  renderLegalTopics(selectedChildIds);
+}
+
+legalSubjectSelect.addEventListener("change", () => {
+  renderLegalTopics();
+});
+
+legalTopicsContainer.addEventListener("change", (event) => {
+  if (event.target.matches('input[name="legalTopic"]')) {
+    updateSelectedTopicsCount();
+  }
+});
+
+// =====================================
 // RENDER CASES
 // =====================================
 
@@ -84,98 +333,98 @@ function renderCases(cases) {
   casesTableBody.innerHTML = cases
     .map(
       (item) => `
-        <tr class="border-t border-slate-100 hover:bg-slate-50">
+      <tr class="border-t border-slate-100 hover:bg-slate-50">
 
-          <td class="px-5 py-4 font-medium text-slate-800">
-            ${escapeHTML(item.title)}
-          </td>
+        <td class="px-5 py-4 font-medium text-slate-800">
+          ${escapeHTML(item.title)}
+        </td>
 
-          <td class="px-5 py-4 text-slate-600">
-            ${escapeHTML(item.citation || "—")}
-          </td>
+        <td class="px-5 py-4 text-slate-600">
+          ${escapeHTML(item.citation || "—")}
+        </td>
 
-          <td class="px-5 py-4 text-slate-600">
-            ${escapeHTML(item.decision_year || "—")}
-          </td>
+        <td class="px-5 py-4 text-slate-600">
+          ${escapeHTML(item.decision_year || "—")}
+        </td>
 
-          <td class="px-5 py-4">
-            ${getStatusBadge(item.status)}
-          </td>
+        <td class="px-5 py-4">
+          ${getStatusBadge(item.status)}
+        </td>
 
-          <td class="px-5 py-4">
-            <div class="flex flex-wrap gap-2">
+        <td class="px-5 py-4">
+          <div class="flex flex-wrap gap-2">
 
-              <button
-                data-action="edit"
-                data-id="${escapeHTML(item.id)}"
-                class="bg-blue-50 text-blue-700 px-3 py-2 rounded text-xs">
-                Edit
-              </button>
+            <button
+              data-action="edit"
+              data-id="${escapeHTML(item.id)}"
+              class="bg-blue-50 text-blue-700 px-3 py-2 rounded text-xs">
+              Edit
+            </button>
 
-              <button
-                data-action="relations"
-                data-id="${escapeHTML(item.id)}"
-                class="text-purple-700 hover:text-purple-900 text-sm font-medium">
-                Manage Relations
-              </button>
+            <button
+              data-action="relations"
+              data-id="${escapeHTML(item.id)}"
+              class="text-purple-700 hover:text-purple-900 text-sm font-medium">
+              Manage Relations
+            </button>
 
-              ${
-                item.status === "draft"
-                  ? `
-                    <button
-                      data-action="publish"
-                      data-id="${escapeHTML(item.id)}"
-                      class="bg-green-50 text-green-700 px-3 py-2 rounded text-xs">
-                      Publish
-                    </button>
-                  `
-                  : ""
-              }
+            ${
+              item.status === "draft"
+                ? `
+                  <button
+                    data-action="publish"
+                    data-id="${escapeHTML(item.id)}"
+                    class="bg-green-50 text-green-700 px-3 py-2 rounded text-xs">
+                    Publish
+                  </button>
+                `
+                : ""
+            }
 
-              ${
-                item.status === "published"
-                  ? `
-                    <button
-                      data-action="unpublish"
-                      data-id="${escapeHTML(item.id)}"
-                      class="bg-amber-50 text-amber-700 px-3 py-2 rounded text-xs">
-                      Unpublish
-                    </button>
-                  `
-                  : ""
-              }
+            ${
+              item.status === "published"
+                ? `
+                  <button
+                    data-action="unpublish"
+                    data-id="${escapeHTML(item.id)}"
+                    class="bg-amber-50 text-amber-700 px-3 py-2 rounded text-xs">
+                    Unpublish
+                  </button>
+                `
+                : ""
+            }
 
-              ${
-                item.status !== "archived"
-                  ? `
-                    <button
-                      data-action="archive"
-                      data-id="${escapeHTML(item.id)}"
-                      class="bg-red-50 text-red-700 px-3 py-2 rounded text-xs">
-                      Archive
-                    </button>
-                  `
-                  : ""
-              }
+            ${
+              item.status !== "archived"
+                ? `
+                  <button
+                    data-action="archive"
+                    data-id="${escapeHTML(item.id)}"
+                    class="bg-red-50 text-red-700 px-3 py-2 rounded text-xs">
+                    Archive
+                  </button>
+                `
+                : ""
+            }
 
-              ${
-                item.status === "archived"
-                  ? `
-                    <button
-                      data-action="restore"
-                      data-id="${escapeHTML(item.id)}"
-                      class="bg-green-50 text-green-700 px-3 py-2 rounded text-xs">
-                      Restore
-                    </button>
-                  `
-                  : ""
-              }
+            ${
+              item.status === "archived"
+                ? `
+                  <button
+                    data-action="restore"
+                    data-id="${escapeHTML(item.id)}"
+                    class="bg-green-50 text-green-700 px-3 py-2 rounded text-xs">
+                    Restore
+                  </button>
+                `
+                : ""
+            }
 
-            </div>
-          </td>
+          </div>
+        </td>
 
-        </tr>
-      `
+      </tr>
+    `,
     )
     .join("");
 }
@@ -195,9 +444,7 @@ async function loadCases() {
   `;
 
   try {
-    const search = document
-      .getElementById("searchCasesInput")
-      .value.trim();
+    const search = document.getElementById("searchCasesInput").value.trim();
 
     const status = document.getElementById("statusFilter").value;
 
@@ -209,16 +456,13 @@ async function loadCases() {
     if (search) params.set("search", search);
     if (status) params.set("status", status);
 
-    const response = await apiRequest(
-      `/admin/cases?${params.toString()}`
-    );
+    const response = await apiRequest(`/admin/cases?${params.toString()}`);
 
     if (!response.success) {
       throw new Error(response.message || "Unable to load cases.");
     }
 
     renderCases(response.cases || []);
-
   } catch (error) {
     console.error("Case Loading Error:", error);
 
@@ -242,11 +486,19 @@ function openCreateForm() {
 
   document.getElementById("caseId").value = "";
 
-  document.getElementById("formTitle").textContent =
-    "Add New Case";
+  currentRelations = {
+    judges: [],
+    topics: [],
+    legislation: [],
+  };
+
+  document.getElementById("formTitle").textContent = "Add New Case";
 
   saveCaseButton.disabled = false;
   saveCaseButton.textContent = "Save Case";
+
+  resetClassification();
+  setJudgmentText("");
 
   caseFormSection.classList.remove("hidden");
 
@@ -257,13 +509,10 @@ function openCreateForm() {
 
 // =====================================
 // OPEN EDIT FORM
-// FETCH COMPLETE CASE DETAILS
 // =====================================
 
 async function openEditForm(id) {
-  const item = currentCases.find(
-    (record) => String(record.id) === String(id)
-  );
+  const item = currentCases.find((record) => String(record.id) === String(id));
 
   if (!item) {
     showCaseMessage("Case record not found.");
@@ -274,63 +523,60 @@ async function openEditForm(id) {
   saveCaseButton.textContent = "Loading Case...";
 
   try {
-    // Get complete case details from backend.
-    // This endpoint includes judgment_text.
-
-    const response = await apiRequest(
-      `/admin/cases/${encodeURIComponent(id)}`
-    );
+    const [response, relationsResponse] = await Promise.all([
+      apiRequest(`/admin/cases/${encodeURIComponent(id)}`),
+      apiRequest(`/admin/cases/${encodeURIComponent(id)}/relations`),
+    ]);
 
     if (!response.success || !response.case) {
       throw new Error(
-        response.message || "Complete case details could not be loaded."
+        response.message || "Complete case details could not be loaded.",
+      );
+    }
+
+    if (!relationsResponse.success || !relationsResponse.relations) {
+      throw new Error(
+        relationsResponse.message || "Case classification could not be loaded.",
       );
     }
 
     const caseData = response.case;
+    const relations = relationsResponse.relations;
 
-    // Fill form fields
+    currentRelations = {
+      judges: relations.judges || [],
+      topics: relations.topics || [],
+      legislation: relations.legislation || [],
+    };
 
-    document.getElementById("caseId").value =
-      caseData.id;
+    document.getElementById("caseId").value = caseData.id;
 
-    document.getElementById("title").value =
-      caseData.title || "";
+    document.getElementById("title").value = caseData.title || "";
 
-    document.getElementById("caseNumber").value =
-      caseData.case_number || "";
+    document.getElementById("caseNumber").value = caseData.case_number || "";
 
-    document.getElementById("citation").value =
-      caseData.citation || "";
+    document.getElementById("citation").value = caseData.citation || "";
 
-    document.getElementById("petitioner").value =
-      caseData.petitioner || "";
+    document.getElementById("petitioner").value = caseData.petitioner || "";
 
-    document.getElementById("respondent").value =
-      caseData.respondent || "";
+    document.getElementById("respondent").value = caseData.respondent || "";
 
-    document.getElementById("courtId").value =
-      caseData.court_id ?? "";
+    document.getElementById("courtId").value = caseData.court_id ?? "";
 
     document.getElementById("decisionYear").value =
       caseData.decision_year ?? "";
 
-    document.getElementById("decisionDate").value =
-      caseData.decision_date
-        ? String(caseData.decision_date).slice(0, 10)
-        : "";
+    document.getElementById("decisionDate").value = caseData.decision_date
+      ? String(caseData.decision_date).slice(0, 10)
+      : "";
 
-    document.getElementById("sourceUrl").value =
-      caseData.source_url || "";
+    document.getElementById("sourceUrl").value = caseData.source_url || "";
 
-    // Important: Load full judgment text.
-    // Do not use the case-list response for this field.
+    setJudgmentText(caseData.judgment_text ?? "");
 
-    document.getElementById("judgmentText").value =
-      caseData.judgment_text ?? "";
+    loadCaseClassification(currentRelations.topics);
 
-    document.getElementById("formTitle").textContent =
-      "Edit Case";
+    document.getElementById("formTitle").textContent = "Edit Case";
 
     saveCaseButton.textContent = "Update Case";
 
@@ -339,16 +585,13 @@ async function openEditForm(id) {
     caseFormSection.scrollIntoView({
       behavior: "smooth",
     });
-
   } catch (error) {
     console.error("Case Details Loading Error:", error);
 
-    showCaseMessage(
-      error.message || "Unable to load complete case details."
-    );
-
+    showCaseMessage(error.message || "Unable to load complete case details.");
   } finally {
     saveCaseButton.disabled = false;
+
     saveCaseButton.textContent = "Update Case";
   }
 }
@@ -358,20 +601,18 @@ async function openEditForm(id) {
 // =====================================
 
 function getCaseFormData() {
-  const data = {
+  syncJudgmentText();
+
+  return {
     title: document.getElementById("title").value.trim(),
 
-    case_number:
-      document.getElementById("caseNumber").value.trim() || null,
+    case_number: document.getElementById("caseNumber").value.trim() || null,
 
-    citation:
-      document.getElementById("citation").value.trim() || null,
+    citation: document.getElementById("citation").value.trim() || null,
 
-    petitioner:
-      document.getElementById("petitioner").value.trim() || null,
+    petitioner: document.getElementById("petitioner").value.trim() || null,
 
-    respondent:
-      document.getElementById("respondent").value.trim() || null,
+    respondent: document.getElementById("respondent").value.trim() || null,
 
     court_id: document.getElementById("courtId").value
       ? Number(document.getElementById("courtId").value)
@@ -381,17 +622,42 @@ function getCaseFormData() {
       ? Number(document.getElementById("decisionYear").value)
       : null,
 
-    decision_date:
-      document.getElementById("decisionDate").value || null,
+    decision_date: document.getElementById("decisionDate").value || null,
 
-    source_url:
-      document.getElementById("sourceUrl").value.trim() || null,
+    source_url: document.getElementById("sourceUrl").value.trim() || null,
 
-    judgment_text:
-      document.getElementById("judgmentText").value.trim() || null,
+    judgment_text: judgmentTextField.value.trim() || null,
+  };
+}
+
+// =====================================
+// SAVE CASE RELATIONSHIPS
+// =====================================
+
+async function saveCaseRelationships(caseId) {
+  const existing = currentRelations || {
+    judges: [],
+    topics: [],
+    legislation: [],
   };
 
-  return data;
+  const response = await apiRequest(
+    `/admin/cases/${encodeURIComponent(caseId)}/relations`,
+    {
+      method: "PUT",
+      body: JSON.stringify({
+        judge_ids: existing.judges || [],
+        topic_ids: getSelectedTopicIds(),
+        legislation: existing.legislation || [],
+      }),
+    },
+  );
+
+  if (!response.success) {
+    throw new Error(
+      response.message || "Case classification could not be saved.",
+    );
+  }
 }
 
 // =====================================
@@ -409,6 +675,12 @@ caseForm.addEventListener("submit", async function (event) {
     return;
   }
 
+  if (!legalSubjectSelect.value) {
+    showCaseMessage("Please select a Primary Legal Subject.");
+    legalSubjectSelect.focus();
+    return;
+  }
+
   saveCaseButton.disabled = true;
   saveCaseButton.textContent = "Saving...";
 
@@ -416,14 +688,10 @@ caseForm.addEventListener("submit", async function (event) {
     let response;
 
     if (id) {
-      response = await apiRequest(
-        `/admin/cases/${encodeURIComponent(id)}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(data),
-        }
-      );
-
+      response = await apiRequest(`/admin/cases/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
     } else {
       response = await apiRequest("/admin/cases", {
         method: "POST",
@@ -432,39 +700,48 @@ caseForm.addEventListener("submit", async function (event) {
     }
 
     if (!response.success) {
+      throw new Error(response.message || "Unable to save case.");
+    }
+
+    const savedCaseId = response.case?.id || id;
+
+    if (!savedCaseId) {
       throw new Error(
-        response.message || "Unable to save case."
+        "Case was saved, but the server did not return its ID. Classification was not saved.",
       );
     }
+
+    await saveCaseRelationships(savedCaseId);
 
     caseFormSection.classList.add("hidden");
 
     caseForm.reset();
 
-    document.getElementById("caseId").value = "";
+    setJudgmentText("");
+    resetClassification();
+
+    currentRelations = {
+      judges: [],
+      topics: [],
+      legislation: [],
+    };
 
     showCaseMessage(
       id
-        ? "Case updated successfully."
-        : "Case created successfully.",
-      "success"
+        ? "Case and classification updated successfully."
+        : "Case and classification created successfully.",
+      "success",
     );
 
     await loadCases();
-
   } catch (error) {
     console.error("Case Save Error:", error);
 
-    showCaseMessage(
-      error.message || "Unable to save case."
-    );
-
+    showCaseMessage(error.message || "Unable to save case.");
   } finally {
     saveCaseButton.disabled = false;
 
-    saveCaseButton.textContent = id
-      ? "Update Case"
-      : "Save Case";
+    saveCaseButton.textContent = id ? "Update Case" : "Save Case";
   }
 });
 
@@ -482,29 +759,16 @@ casesTableBody.addEventListener("click", async function (event) {
 
   if (!id) return;
 
-  // -----------------------------------
-  // EDIT CASE
-  // -----------------------------------
-
   if (action === "edit") {
     await openEditForm(id);
     return;
   }
 
-  // -----------------------------------
-  // MANAGE CASE RELATIONS
-  // -----------------------------------
-
   if (action === "relations") {
-    window.location.href =
-      `./admin-case-relations.html?caseId=${encodeURIComponent(id)}`;
+    window.location.href = `./admin-case-relations.html?caseId=${encodeURIComponent(id)}`;
 
     return;
   }
-
-  // -----------------------------------
-  // PUBLISH / UNPUBLISH / ARCHIVE / RESTORE
-  // -----------------------------------
 
   const actionLabels = {
     publish: "publish",
@@ -517,11 +781,7 @@ casesTableBody.addEventListener("click", async function (event) {
 
   if (!label) return;
 
-  if (
-    !window.confirm(
-      `Are you sure you want to ${label} this case?`
-    )
-  ) {
+  if (!window.confirm(`Are you sure you want to ${label} this case?`)) {
     return;
   }
 
@@ -532,26 +792,18 @@ casesTableBody.addEventListener("click", async function (event) {
       `/admin/cases/${encodeURIComponent(id)}/${action}`,
       {
         method: "POST",
-      }
+      },
     );
 
     if (!response.success) {
-      throw new Error(
-        response.message || `Unable to ${label} case.`
-      );
+      throw new Error(response.message || `Unable to ${label} case.`);
     }
 
-    showCaseMessage(
-      `Case ${label} action completed successfully.`,
-      "success"
-    );
+    showCaseMessage(`Case ${label} action completed successfully.`, "success");
 
     await loadCases();
-
   } catch (error) {
-    showCaseMessage(
-      error.message || `Unable to ${label} case.`
-    );
+    showCaseMessage(error.message || `Unable to ${label} case.`);
 
     button.disabled = false;
   }
@@ -565,58 +817,43 @@ document
   .getElementById("showCreateForm")
   .addEventListener("click", openCreateForm);
 
-document
-  .getElementById("closeCaseForm")
-  .addEventListener("click", () => {
-    caseFormSection.classList.add("hidden");
-  });
+document.getElementById("closeCaseForm").addEventListener("click", () => {
+  caseFormSection.classList.add("hidden");
+});
 
-document
-  .getElementById("cancelCaseForm")
-  .addEventListener("click", () => {
-    caseFormSection.classList.add("hidden");
-  });
+document.getElementById("cancelCaseForm").addEventListener("click", () => {
+  caseFormSection.classList.add("hidden");
+});
 
 // =====================================
 // SEARCH / FILTER / REFRESH
 // =====================================
 
-document
-  .getElementById("refreshCases")
-  .addEventListener("click", loadCases);
+document.getElementById("refreshCases").addEventListener("click", loadCases);
 
-document
-  .getElementById("statusFilter")
-  .addEventListener("change", loadCases);
+document.getElementById("statusFilter").addEventListener("change", loadCases);
 
 let searchTimeout;
 
-document
-  .getElementById("searchCasesInput")
-  .addEventListener("input", () => {
-    clearTimeout(searchTimeout);
+document.getElementById("searchCasesInput").addEventListener("input", () => {
+  clearTimeout(searchTimeout);
 
-    searchTimeout = setTimeout(loadCases, 400);
-  });
+  searchTimeout = setTimeout(loadCases, 400);
+});
 
 // =====================================
 // LOGOUT
 // =====================================
 
-document
-  .getElementById("logoutButton")
-  .addEventListener("click", async () => {
-    try {
-      await AuthAPI.logout();
+document.getElementById("logoutButton").addEventListener("click", async () => {
+  try {
+    await AuthAPI.logout();
 
-      window.location.href = "./login.html";
-
-    } catch (error) {
-      showCaseMessage(
-        error.message || "Logout failed."
-      );
-    }
-  });
+    window.location.href = "./login.html";
+  } catch (error) {
+    showCaseMessage(error.message || "Logout failed.");
+  }
+});
 
 // =====================================
 // INITIALIZE CASE MANAGEMENT
@@ -636,16 +873,16 @@ async function initializeCaseManagement() {
       return;
     }
 
-    await loadCases();
+    initializeJudgmentEditor();
 
+    await loadLegalTopics();
+
+    await loadCases();
   } catch (error) {
     console.error("Case Management Initialization Error:", error);
 
-    window.location.href = "./login.html";
+    showCaseMessage(error.message || "Could not initialize Case Management.");
   }
 }
 
-document.addEventListener(
-  "DOMContentLoaded",
-  initializeCaseManagement
-);
+document.addEventListener("DOMContentLoaded", initializeCaseManagement);

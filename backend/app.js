@@ -1,4 +1,3 @@
-
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -20,6 +19,7 @@ import adminUserRoutes from "./routes/adminUserRoutes.js";
 import adminCaseRoutes from "./routes/adminCaseRoutes.js";
 import adminSessionRoutes from "./routes/adminSessionRoutes.js";
 import adminActivityRoutes from "./routes/adminActivityRoutes.js";
+import adminClassificationRoutes from "./routes/adminClassificationRoutes.js";
 
 const app = express();
 
@@ -27,16 +27,16 @@ const isProduction = process.env.NODE_ENV === "production";
 
 // Validate required environment variables
 if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL is missing from .env");
+  throw new Error("DATABASE_URL is missing from .env");
 }
 
 if (!process.env.SESSION_SECRET) {
-    throw new Error("SESSION_SECRET is missing from .env");
+  throw new Error("SESSION_SECRET is missing from .env");
 }
 
 // Trust proxy in production (e.g. Render)
 if (isProduction) {
-    app.set("trust proxy", 1);
+  app.set("trust proxy", 1);
 }
 
 // Security middleware
@@ -44,45 +44,41 @@ app.use(helmet());
 
 // CORS configuration
 const localOrigins = [
-    "http://localhost:5000",
-    "http://127.0.0.1:5000",
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-    "http://localhost:5501",
-    "http://127.0.0.1:5501"
+  "http://localhost:5000",
+  "http://127.0.0.1:5000",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+  "http://localhost:5501",
+  "http://127.0.0.1:5501",
 ];
 
 const configuredOrigins = (process.env.CLIENT_ORIGINS || "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 if (isProduction && configuredOrigins.length === 0) {
-    throw new Error(
-        "CLIENT_ORIGINS must contain your production frontend URL."
-    );
+  throw new Error("CLIENT_ORIGINS must contain your production frontend URL.");
 }
 
-const allowedOrigins = [
-    ...new Set([...localOrigins, ...configuredOrigins])
-];
+const allowedOrigins = [...new Set([...localOrigins, ...configuredOrigins])];
 
 app.use(
-    cors({
-        origin: (origin, callback) => {
-            // Allow requests without an Origin header
-            if (!origin || allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            }
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests without an Origin header
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-            console.error("Blocked CORS Origin:", origin);
+      console.error("Blocked CORS Origin:", origin);
 
-            return callback(new Error("Not allowed by CORS"));
-        },
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"]
-    })
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
 );
 
 // Body parsing
@@ -93,60 +89,54 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 const PgSessionStore = connectPgSimple(session);
 
 const sessionStore = new PgSessionStore({
-    conString: process.env.DATABASE_URL,
-    tableName: "user_sessions",
-    createTableIfMissing: true
+  conString: process.env.DATABASE_URL,
+  tableName: "user_sessions",
+  createTableIfMissing: true,
 });
 
 // Session cookie configuration
-const sameSite = (
-    process.env.SESSION_COOKIE_SAME_SITE || "lax"
-).toLowerCase();
+const sameSite = (process.env.SESSION_COOKIE_SAME_SITE || "lax").toLowerCase();
 
 if (!["lax", "strict", "none"].includes(sameSite)) {
-    throw new Error(
-        "SESSION_COOKIE_SAME_SITE must be lax, strict, or none."
-    );
+  throw new Error("SESSION_COOKIE_SAME_SITE must be lax, strict, or none.");
 }
 
 if (sameSite === "none" && !isProduction) {
-    throw new Error(
-        "SameSite=None requires secure cookies in production."
-    );
+  throw new Error("SameSite=None requires secure cookies in production.");
 }
 
 // Express session middleware
 app.use(
-    session({
-        store: sessionStore,
-        name: "lexbd.sid",
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite,
-            maxAge: 8 * 60 * 60 * 1000
-        }
-    })
+  session({
+    store: sessionStore,
+    name: "lexbd.sid",
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite,
+      maxAge: 8 * 60 * 60 * 1000,
+    },
+  }),
 );
 
 // Home route
 app.get("/", (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Welcome to Bangladesh Case Law Directory API"
-    });
+  res.status(200).json({
+    success: true,
+    message: "Welcome to Bangladesh Case Law Directory API",
+  });
 });
 
 // Health check
 app.get("/api/health", (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Bangladesh Case Law Directory API is running",
-        timestamp: new Date().toISOString()
-    });
+  res.status(200).json({
+    success: true,
+    message: "Bangladesh Case Law Directory API is running",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // API routes
@@ -157,40 +147,40 @@ app.use("/api/judges", judgeRoutes);
 app.use("/api/topics", topicRoutes);
 app.use("/api/legislation", legislationRoutes);
 app.use("/api/auth", authRoutes);
-
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin/cases", adminCaseRoutes);
 app.use("/api/admin/sessions", adminSessionRoutes);
 app.use("/api/admin/activity", adminActivityRoutes);
+app.use("/api/admin/classifications", adminClassificationRoutes);
 
 // 404 handler
 app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: "API endpoint not found"
-    });
+  res.status(404).json({
+    success: false,
+    message: "API endpoint not found",
+  });
 });
 
 // Central error handler
 app.use((error, req, res, next) => {
-    if (res.headersSent) {
-        return next(error);
-    }
+  if (res.headersSent) {
+    return next(error);
+  }
 
-    if (error.message === "Not allowed by CORS") {
-        return res.status(403).json({
-            success: false,
-            message: "Origin not allowed."
-        });
-    }
-
-    console.error("Application error:", error.message);
-
-    return res.status(500).json({
-        success: false,
-        message: "Internal server error"
+  if (error.message === "Not allowed by CORS") {
+    return res.status(403).json({
+      success: false,
+      message: "Origin not allowed.",
     });
+  }
+
+  console.error("Application error:", error.message);
+
+  return res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
 });
 
 export default app;

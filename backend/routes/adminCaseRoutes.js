@@ -16,20 +16,31 @@ router.use(requireRole("admin", "editor"));
  * Child topics = Legal Topics
  */
 
+
 router.get("/topics", async (req, res) => {
     try {
         const pool = getPool();
 
         const result = await pool.query(`
             SELECT
-                id,
-                name,
-                parent_id,
-                description
-            FROM legal_topics
+                topic.id,
+                topic.name,
+                topic.parent_id,
+                topic.description
+            FROM legal_topics AS topic
+            WHERE topic.is_active = TRUE
+              AND (
+                  topic.parent_id IS NULL
+                  OR EXISTS (
+                      SELECT 1
+                      FROM legal_topics AS parent
+                      WHERE parent.id = topic.parent_id
+                        AND parent.is_active = TRUE
+                  )
+              )
             ORDER BY
-                parent_id NULLS FIRST,
-                name ASC
+                topic.parent_id NULLS FIRST,
+                topic.name ASC
         `);
 
         return res.status(200).json({
@@ -38,7 +49,7 @@ router.get("/topics", async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Legal topics retrieval error:", error.message);
+        console.error("Topics retrieval error:", error.message);
 
         return res.status(500).json({
             success: false,
@@ -46,6 +57,7 @@ router.get("/topics", async (req, res) => {
         });
     }
 });
+
 
 
 // =====================================

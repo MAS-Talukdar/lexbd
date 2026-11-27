@@ -1,465 +1,604 @@
+
 const API_BASE_URL = "/api";
 
-const caseForm = document.getElementById("caseForm");
-const messageBox = document.getElementById("message");
+// ============================================
+// ELEMENTS & STATE
+// ============================================
+
+const form = document.getElementById("caseForm");
 const saveButton = document.getElementById("saveButton");
+const messageBox = document.getElementById("message");
 
 const subjectSelect = document.getElementById("legal_subject");
-const topicsSelect = document.getElementById("legal_topics");
+const topicsContainer = document.getElementById("legalTopicsContainer");
+const selectedTopicsCount = document.getElementById("selectedTopicsCount");
+
 const judgmentTextarea = document.getElementById("judgment_text");
+const wordCountElement = document.getElementById("judgmentWordCount");
 
 const params = new URLSearchParams(window.location.search);
-const caseId = params.get("id");
+const caseId = params.get("caseId") || params.get("id");
 
 let quill = null;
 let allTopics = [];
 let currentRelations = {
-  judges: [],
-  topics: [],
-  legislation: [],
+    judges: [],
+    legislation: []
 };
 
-const fields = [
-  "title",
-  "case_number",
-  "petitioner",
-  "respondent",
-  "citation",
-  "court_id",
-  "decision_year",
-  "decision_date",
-  "pdf_url",
-  "source_url",
-];
-
-// =====================================
-// API REQUEST
-// =====================================
+// ============================================
+// API HELPER
+// ============================================
 
 async function apiRequest(endpoint, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        credentials: "include",
+        ...options,
+        headers: {
+            ...(options.headers || {})
+        }
+    });
 
-  let data = {};
+    const responseText = await response.text();
 
-  try {
-    data = await response.json();
-  } catch {
-    data = {};
-  }
+    let data;
 
-  if (!response.ok) {
-    throw new Error(data.message || "Request failed");
-  }
+    try {
+        data = responseText ? JSON.parse(responseText) : {};
+    } catch {
+        throw new Error(
+            `Invalid server response (${response.status}). ` +
+            "The server did not return valid JSON."
+        );
+    }
 
-  return data;
+    if (!response.ok) {
+        throw new Error(
+            data.message ||
+            data.error ||
+            `Request failed with status ${response.status}`
+        );
+    }
+
+    return data;
 }
 
-// =====================================
+// ============================================
 // MESSAGE
-// =====================================
+// ============================================
 
-function showMessage(message, type = "error") {
-  messageBox.textContent = message;
+function showMessage(message, type = "success") {
+    messageBox.textContent = message;
+    messageBox.classList.remove(
+        "hidden",
+        "bg-green-100",
+        "text-green-800",
+        "bg-red-100",
+        "text-red-800",
+        "bg-blue-100",
+        "text-blue-800"
+    );
 
-  messageBox.className =
-    "mb-5 p-3 rounded-lg text-sm " +
-    (type === "success"
-      ? "bg-green-100 text-green-700"
-      : "bg-red-100 text-red-700");
+    if (type === "success") {
+        messageBox.classList.add("bg-green-100", "text-green-800");
+    } else if (type === "error") {
+        messageBox.classList.add("bg-red-100", "text-red-800");
+    } else {
+        messageBox.classList.add("bg-blue-100", "text-blue-800");
+    }
 }
 
-// =====================================
-// EDITOR INITIALIZATION
-// =====================================
+function hideMessage() {
+    messageBox.classList.add("hidden");
+}
+
+// ============================================
+// QUILL JUDGMENT EDITOR
+// ============================================
 
 function initializeJudgmentEditor() {
-  if (typeof Quill === "undefined") {
-    throw new Error("Judgment Editor could not be loaded.");
-  }
+    if (typeof Quill === "undefined") {
+        throw new Error("Quill Editor could not be loaded.");
+    }
 
-  quill = new Quill("#judgmentEditor", {
-    theme: "snow",
+    quill = new Quill("#judgmentEditor", {
+        theme: "snow",
 
-    modules: {
-      toolbar: "#judgmentToolbar",
-    },
+        modules: {
+            toolbar: "#judgmentToolbar"
+        },
 
-    placeholder: "Write or paste the judgment text here...",
-  });
+        placeholder: "Write or paste the judgment text here..."
+    });
 
-  quill.on("text-change", updateWordCount);
+    quill.on("text-change", updateWordCount);
+    quill.on("text-change", syncJudgmentText);
 
-  updateWordCount();
+    updateWordCount();
+    syncJudgmentText();
 }
 
-function updateWordCount() {
-  if (!quill) return;
+function syncJudgmentText() {
+    if (!quill) return;
 
-  const text = quill.getText().trim();
-
-  const wordCount = text ? text.split(/\s+/).length : 0;
-
-  const counter = document.getElementById("judgmentWordCount");
-
-  if (counter) {
-    counter.textContent = `${wordCount} words`;
-  }
+    judgmentTextarea.value = quill.root.innerHTML;
 }
 
 function setJudgmentText(value) {
-  if (!quill) return;
+    if (!quill) return;
 
-  const content = value || "";
+    if (!value) {
+        quill.setText("");
+    } else {
+        quill.clipboard.dangerouslyPasteHTML(value);
+    }
 
-  // Existing formatted HTML
-  if (/<[a-z][\s\S]*>/i.test(content)) {
-    quill.clipboard.dangerouslyPasteHTML(content);
-  } else {
-    // Existing plain text
-    quill.setText(content);
-  }
-
-  updateWordCount();
+    syncJudgmentText();
+    updateWordCount();
 }
 
-function getJudgmentText() {
-  if (!quill) return "";
+function updateWordCount() {
+    if (!quill) return;
 
-  return quill.root.innerHTML;
+    const text = quill.getText().trim();
+
+    const words = text
+        ? text.split(/\s+/).filter(Boolean).length
+        : 0;
+
+    wordCountElement.textContent = `${words} words`;
 }
 
-// =====================================
-// LEGAL CLASSIFICATION
-// =====================================
+// ============================================
+// LOAD LEGAL SUBJECTS & TOPICS
+// ============================================
 
 async function loadLegalTopics() {
-  const data = await apiRequest("/admin/cases/topics");
+    const data = await apiRequest("/admin/cases/topics");
 
-  allTopics = data.topics || [];
+    allTopics = data.topics || [];
 
-  subjectSelect.innerHTML = '<option value="">Select Primary Subject</option>';
-
-  const subjects = allTopics.filter((topic) => topic.parent_id === null);
-
-  subjects.forEach((subject) => {
-    const option = document.createElement("option");
-
-    option.value = subject.id;
-    option.textContent = subject.name;
-
-    subjectSelect.appendChild(option);
-  });
-
-  subjectSelect.addEventListener("change", function () {
-    populateLegalTopics(this.value, []);
-  });
-}
-
-function populateLegalTopics(subjectId, selectedTopicIds = []) {
-  topicsSelect.innerHTML = "";
-
-  if (!subjectId) {
-    const option = document.createElement("option");
-
-    option.textContent = "Select a Primary Subject first";
-    option.disabled = true;
-
-    topicsSelect.appendChild(option);
-
-    return;
-  }
-
-  const childTopics = allTopics.filter(
-    (topic) => String(topic.parent_id) === String(subjectId),
-  );
-
-  if (childTopics.length === 0) {
-    const option = document.createElement("option");
-
-    option.textContent = "No topics available under this subject";
-    option.disabled = true;
-
-    topicsSelect.appendChild(option);
-
-    return;
-  }
-
-  childTopics.forEach((topic) => {
-    const option = document.createElement("option");
-
-    option.value = topic.id;
-    option.textContent = topic.name;
-
-    option.selected = selectedTopicIds.some(
-      (id) => String(id) === String(topic.id),
+    const subjects = allTopics.filter(
+        topic => topic.parent_id === null
     );
 
-    topicsSelect.appendChild(option);
-  });
+    subjectSelect.innerHTML = `
+        <option value="">Select Primary Legal Subject</option>
+    `;
+
+    subjects.forEach(subject => {
+        const option = document.createElement("option");
+
+        option.value = subject.id;
+        option.textContent = subject.name;
+
+        subjectSelect.appendChild(option);
+    });
+
+    if (subjects.length === 0) {
+        subjectSelect.innerHTML = `
+            <option value="">No Legal Subjects available</option>
+        `;
+
+        renderTopicsMessage(
+            "No Legal Subjects found. Add subjects to the legal_topics database first."
+        );
+    }
+}
+
+function renderTopicsMessage(message) {
+    topicsContainer.innerHTML = "";
+
+    const paragraph = document.createElement("p");
+    paragraph.className = "text-sm text-gray-500";
+    paragraph.textContent = message;
+
+    topicsContainer.appendChild(paragraph);
+
+    updateSelectedTopicsCount();
+}
+
+// ============================================
+// DISPLAY TOPIC CHECKBOXES
+// ============================================
+
+function renderLegalTopics(subjectId, selectedIds = []) {
+    topicsContainer.innerHTML = "";
+
+    if (!subjectId) {
+        renderTopicsMessage(
+            "Select a Primary Legal Subject first."
+        );
+        return;
+    }
+
+    const childTopics = allTopics.filter(
+        topic => String(topic.parent_id) === String(subjectId)
+    );
+
+    if (childTopics.length === 0) {
+        renderTopicsMessage(
+            "No Legal Topics are available under this subject."
+        );
+        return;
+    }
+
+    childTopics.forEach(topic => {
+        const label = document.createElement("label");
+
+        label.className = "topic-option";
+
+        const checkbox = document.createElement("input");
+
+        checkbox.type = "checkbox";
+        checkbox.name = "legal_topic_ids";
+        checkbox.value = topic.id;
+        checkbox.checked = selectedIds.some(
+            id => String(id) === String(topic.id)
+        );
+
+        checkbox.addEventListener(
+            "change",
+            updateSelectedTopicsCount
+        );
+
+        const text = document.createElement("span");
+
+        text.className = "text-sm text-slate-700";
+        text.textContent = topic.name;
+
+        label.appendChild(checkbox);
+        label.appendChild(text);
+
+        topicsContainer.appendChild(label);
+    });
+
+    updateSelectedTopicsCount();
 }
 
 function getSelectedTopicIds() {
-  const subjectId = subjectSelect.value;
+    const subjectId = subjectSelect.value;
 
-  const selectedChildIds = Array.from(topicsSelect.selectedOptions)
-    .map((option) => Number(option.value))
-    .filter(Number.isSafeInteger);
+    if (!subjectId) return [];
 
-  // Store the Primary Subject and its child Topics
-  // in the existing case_topics relationship.
+    const selectedChildren = Array.from(
+        topicsContainer.querySelectorAll(
+            'input[name="legal_topic_ids"]:checked'
+        )
+    ).map(input => Number(input.value));
 
-  return subjectId
-    ? [Number(subjectId), ...selectedChildIds]
-    : selectedChildIds;
+    // Save both the Primary Subject and selected child Topics.
+    return [
+        Number(subjectId),
+        ...selectedChildren
+    ];
 }
 
-// =====================================
-// AUTHENTICATION
-// =====================================
+function updateSelectedTopicsCount() {
+    const selected = topicsContainer.querySelectorAll(
+        'input[name="legal_topic_ids"]:checked'
+    );
 
-async function checkEditorAccess() {
-  try {
+    selectedTopicsCount.textContent =
+        `${selected.length} topics selected`;
+}
+
+// ============================================
+// SUBJECT CHANGE
+// ============================================
+
+subjectSelect.addEventListener("change", () => {
+    renderLegalTopics(subjectSelect.value);
+});
+
+// ============================================
+// FORM FIELD HELPERS
+// ============================================
+
+function setFieldValue(id, value) {
+    const element = document.getElementById(id);
+
+    if (element) {
+        element.value = value ?? "";
+    }
+}
+
+function getFieldValue(id) {
+    const element = document.getElementById(id);
+
+    return element ? element.value.trim() : "";
+}
+
+function getNumberOrNull(value) {
+    if (!value) return null;
+
+    const number = Number(value);
+
+    return Number.isFinite(number) ? number : null;
+}
+
+// ============================================
+// AUTHENTICATION
+// ============================================
+
+async function checkAuthentication() {
     const data = await apiRequest("/auth/me");
 
-    if (!data.authenticated || !data.user) {
-      window.location.href = "./login.html";
-      return false;
+    const user = data.user || data;
+
+    if (data.success === false || !user) {
+        window.location.href = "./login.html";
+        return false;
     }
 
-    if (data.user.role === "admin") {
-      window.location.href = "./admin-dashboard.html";
-      return false;
-    }
+    const role = user.role;
 
-    if (data.user.role !== "editor") {
-      window.location.href = "./login.html";
-      return false;
+    if (role && !["admin", "editor"].includes(role)) {
+        window.location.href = "./login.html";
+        return false;
     }
 
     return true;
-  } catch (error) {
-    window.location.href = "./login.html";
-    return false;
-  }
 }
 
-// =====================================
-// LOAD CASE RELATIONSHIPS
-// =====================================
+// ============================================
+// LOAD CASE RELATIONS
+// ============================================
 
 async function loadCaseRelations(id) {
-  const data = await apiRequest(`/admin/cases/${id}/relations`);
-
-  const relations = data.relations || {};
-
-  currentRelations = {
-    judges: relations.judges || [],
-    topics: relations.topics || [],
-    legislation: relations.legislation || [],
-  };
-
-  const selectedIds = currentRelations.topics;
-
-  // Find the selected Primary Subject.
-  const primarySubject = selectedIds.find((id) =>
-    allTopics.some(
-      (topic) => String(topic.id) === String(id) && topic.parent_id === null,
-    ),
-  );
-
-  if (primarySubject) {
-    subjectSelect.value = primarySubject;
-
-    const childTopicIds = selectedIds.filter((id) =>
-      allTopics.some(
-        (topic) =>
-          String(topic.id) === String(id) &&
-          String(topic.parent_id) === String(primarySubject),
-      ),
+    const data = await apiRequest(
+        `/admin/cases/${id}/relations`
     );
 
-    populateLegalTopics(primarySubject, childTopicIds);
-  } else {
-    subjectSelect.value = "";
-    populateLegalTopics("", []);
-  }
+    const relations = data.relations || {};
+
+    currentRelations = {
+        judges: relations.judges || [],
+        legislation: relations.legislation || []
+    };
+
+    const savedTopicIds = (relations.topics || []).map(Number);
+
+    const subject = allTopics.find(topic =>
+        topic.parent_id === null &&
+        savedTopicIds.includes(Number(topic.id))
+    );
+
+    if (subject) {
+        subjectSelect.value = subject.id;
+
+        const childIds = savedTopicIds.filter(topicId => {
+            const topic = allTopics.find(
+                item => Number(item.id) === topicId
+            );
+
+            return topic &&
+                String(topic.parent_id) === String(subject.id);
+        });
+
+        renderLegalTopics(subject.id, childIds);
+    } else {
+        subjectSelect.value = "";
+
+        renderTopicsMessage(
+            "No Primary Legal Subject is assigned to this case."
+        );
+    }
 }
 
-// =====================================
+// ============================================
 // LOAD EXISTING CASE
-// =====================================
+// ============================================
 
-async function loadCase() {
-  if (!caseId) return;
+async function loadExistingCase() {
+    const data = await apiRequest(
+        `/admin/cases/${caseId}`
+    );
 
-  try {
-    const data = await apiRequest(`/admin/cases/${caseId}`);
+    const caseData = data.case || data;
 
-    const caseData = data.case;
+    document.getElementById("formTitle").textContent =
+        "Edit Case";
 
-    if (!caseData) {
-      throw new Error("Case information not found.");
-    }
+    saveButton.textContent = "Update Draft";
 
-    fields.forEach((field) => {
-      const input = document.getElementById(field);
+    setFieldValue("title", caseData.title);
+    setFieldValue("case_number", caseData.case_number);
+    setFieldValue("citation", caseData.citation);
+    setFieldValue("petitioner", caseData.petitioner);
+    setFieldValue("respondent", caseData.respondent);
+    setFieldValue("court_id", caseData.court_id);
+    setFieldValue("decision_year", caseData.decision_year);
+    setFieldValue("decision_date", caseData.decision_date);
+    setFieldValue("pdf_url", caseData.pdf_url);
+    setFieldValue("source_url", caseData.source_url);
 
-      if (!input) return;
-
-      let value = caseData[field] ?? "";
-
-      if (field === "decision_date" && value) {
-        value = String(value).slice(0, 10);
-      }
-
-      input.value = value;
-    });
-
-    setJudgmentText(caseData.judgment_text);
+    setJudgmentText(caseData.judgment_text || "");
 
     await loadCaseRelations(caseId);
-
-    document.getElementById("formTitle").textContent = "Edit Case";
-
-    saveButton.textContent = "Update Case";
-  } catch (error) {
-    showMessage(error.message);
-    saveButton.disabled = true;
-  }
 }
 
-// =====================================
-// GET CASE FORM DATA
-// =====================================
+// ============================================
+// BUILD CASE PAYLOAD
+// ============================================
 
-function getCasePayload() {
-  const payload = {};
+function buildCasePayload() {
+    syncJudgmentText();
 
-  fields.forEach((field) => {
-    const input = document.getElementById(field);
+    return {
+        title: getFieldValue("title"),
+        case_number: getFieldValue("case_number") || null,
+        citation: getFieldValue("citation") || null,
+        petitioner: getFieldValue("petitioner") || null,
+        respondent: getFieldValue("respondent") || null,
 
-    if (!input) return;
+        court_id: getNumberOrNull(
+            getFieldValue("court_id")
+        ),
 
-    const value = input.value.trim();
+        decision_year: getNumberOrNull(
+            getFieldValue("decision_year")
+        ),
 
-    if (field === "court_id" || field === "decision_year") {
-      payload[field] = value === "" ? null : Number(value);
-    } else {
-      payload[field] = value === "" ? null : value;
-    }
-  });
+        decision_date: getFieldValue("decision_date") || null,
 
-  payload.judgment_text = getJudgmentText();
+        judgment_text: judgmentTextarea.value,
 
-  return payload;
+        pdf_url: getFieldValue("pdf_url") || null,
+        source_url: getFieldValue("source_url") || null
+    };
 }
 
-// =====================================
-// SAVE CASE RELATIONSHIPS
-// =====================================
+// ============================================
+// SAVE CASE RELATIONS
+// ============================================
 
 async function saveCaseRelations(id) {
-  const topicIds = getSelectedTopicIds();
+    const payload = {
+        judge_ids: currentRelations.judges,
+        topic_ids: getSelectedTopicIds(),
+        legislation: currentRelations.legislation
+    };
 
-  await apiRequest(`/admin/cases/${id}/relations`, {
-    method: "PUT",
+    return apiRequest(
+        `/admin/cases/${id}/relations`,
+        {
+            method: "PUT",
 
-    body: JSON.stringify({
-      judge_ids: currentRelations.judges,
-      topic_ids: topicIds,
-      legislation: currentRelations.legislation,
-    }),
-  });
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(payload)
+        }
+    );
 }
 
-// =====================================
-// FORM SUBMISSION
-// =====================================
+// ============================================
+// SUBMIT FORM
+// ============================================
 
-caseForm.addEventListener("submit", async function (event) {
-  event.preventDefault();
+form.addEventListener("submit", async event => {
+    event.preventDefault();
 
-  const payload = getCasePayload();
+    hideMessage();
 
-  if (!payload.title) {
-    showMessage("Case title is required.");
-    return;
-  }
+    syncJudgmentText();
 
-  if (!quill || !quill.getText().trim()) {
-    showMessage("Judgment text is required.");
-    return;
-  }
+    const payload = buildCasePayload();
 
-  saveButton.disabled = true;
-  saveButton.textContent = "Saving...";
-
-  try {
-    const endpoint = caseId ? `/admin/cases/${caseId}` : "/admin/cases";
-
-    const method = caseId ? "PATCH" : "POST";
-
-    const data = await apiRequest(endpoint, {
-      method,
-      body: JSON.stringify(payload),
-    });
-
-    if (!data.success) {
-      throw new Error(data.message || "Could not save case.");
+    if (!payload.title) {
+        showMessage("Please enter the Case Title.", "error");
+        return;
     }
 
-    const savedCaseId = caseId || data.case?.id;
-
-    if (!savedCaseId) {
-      throw new Error("Case was saved, but its ID could not be retrieved.");
+    if (!quill.getText().trim()) {
+        showMessage("Please enter the Judgment Text.", "error");
+        return;
     }
 
-    await saveCaseRelations(savedCaseId);
+    if (!subjectSelect.value) {
+        showMessage(
+            "Please select a Primary Legal Subject.",
+            "error"
+        );
+        return;
+    }
 
-    showMessage("Case and classification saved successfully.", "success");
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
 
-    saveButton.textContent = "Saved";
+    try {
+        let savedCaseId = caseId;
 
-    setTimeout(() => {
-      window.location.href = "./editor-dashboard.html";
-    }, 1200);
-  } catch (error) {
-    showMessage(error.message);
+        if (caseId) {
+            await apiRequest(
+                `/admin/cases/${caseId}`,
+                {
+                    method: "PATCH",
 
-    saveButton.disabled = false;
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
 
-    saveButton.textContent = caseId ? "Update Case" : "Save Draft";
-  }
+                    body: JSON.stringify(payload)
+                }
+            );
+        } else {
+            const data = await apiRequest(
+                "/admin/cases",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            savedCaseId = data.case?.id;
+
+            if (!savedCaseId) {
+                throw new Error(
+                    "Case was saved but its ID was not returned."
+                );
+            }
+        }
+
+        // Save Legal Subject and Topics.
+        await saveCaseRelations(savedCaseId);
+
+        showMessage(
+            "Case and Legal Classification saved successfully!",
+            "success"
+        );
+
+        saveButton.textContent = "Saved";
+
+        setTimeout(() => {
+            window.location.href = "./editor-dashboard.html";
+        }, 1200);
+
+    } catch (error) {
+        console.error("Case saving error:", error);
+
+        showMessage(error.message, "error");
+
+        saveButton.disabled = false;
+        saveButton.textContent = caseId
+            ? "Update Draft"
+            : "Save Draft";
+    }
 });
 
-// =====================================
-// INITIALIZE FORM
-// =====================================
+// ============================================
+// INITIALIZE
+// ============================================
 
-async function initializeForm() {
-  const authorized = await checkEditorAccess();
+async function initializePage() {
+    try {
+        initializeJudgmentEditor();
 
-  if (!authorized) return;
+        const authenticated = await checkAuthentication();
 
-  try {
-    initializeJudgmentEditor();
+        if (!authenticated) return;
 
-    await loadLegalTopics();
+        await loadLegalTopics();
 
-    if (caseId) {
-      await loadCase();
+        if (caseId) {
+            await loadExistingCase();
+        }
+
+    } catch (error) {
+        console.error("Page initialization error:", error);
+
+        showMessage(
+            error.message || "Could not initialize the Case Entry Form.",
+            "error"
+        );
     }
-  } catch (error) {
-    showMessage(error.message);
-    saveButton.disabled = true;
-  }
 }
 
-initializeForm();
+initializePage();
