@@ -20,6 +20,7 @@ const refreshButton = document.getElementById("refreshButton");
 const logoutButton = document.getElementById("logoutButton");
 
 let classifications = [];
+let isSaving = false;
 
 function showMessage(message, type = "success") {
   pageMessage.textContent = message;
@@ -48,11 +49,15 @@ function escapeHTML(value = "") {
   );
 }
 
+function getSubject(item) {
+  return item.parent_id === null || item.parent_id === undefined;
+}
+
 async function loadClassifications() {
   classificationsTableBody.innerHTML = `
         <tr>
             <td colspan="5" class="p-5 text-center text-gray-500">
-                Loading...
+                Loading classifications...
             </td>
         </tr>
     `;
@@ -60,15 +65,19 @@ async function loadClassifications() {
   try {
     const response = await apiRequest("/admin/classifications");
 
-    if (!response.success) {
-      throw new Error(response.message || "Could not load classifications");
+    if (!response || !response.success) {
+      throw new Error(response?.message || "Could not load classifications.");
     }
 
-    classifications = response.classifications || [];
+    classifications = Array.isArray(response.classifications)
+      ? response.classifications
+      : [];
 
     renderClassifications();
     populateParentSubjects();
   } catch (error) {
+    console.error("Classification loading error:", error);
+
     classificationsTableBody.innerHTML = `
             <tr>
                 <td colspan="5" class="p-5 text-center text-red-600">
@@ -76,6 +85,8 @@ async function loadClassifications() {
                 </td>
             </tr>
         `;
+
+    showMessage(error.message, "error");
   }
 }
 
@@ -84,18 +95,18 @@ function renderClassifications() {
     classificationsTableBody.innerHTML = `
             <tr>
                 <td colspan="5" class="p-5 text-center text-gray-500">
-                    No classifications found.
+                    No classifications found. Create your first Legal Subject.
                 </td>
             </tr>
         `;
     return;
   }
 
-  const subjects = classifications.filter((item) => item.parent_id === null);
+  const subjects = classifications.filter(getSubject);
 
   classificationsTableBody.innerHTML = classifications
     .map((item) => {
-      const isSubject = item.parent_id === null;
+      const isSubject = getSubject(item);
 
       const parent = isSubject
         ? null
@@ -130,7 +141,7 @@ function renderClassifications() {
                         <button
                             type="button"
                             data-action="edit"
-                            data-id="${item.id}"
+                            data-id="${escapeHTML(item.id)}"
                             class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded">
                             Edit
                         </button>
@@ -138,7 +149,7 @@ function renderClassifications() {
                         <button
                             type="button"
                             data-action="toggle"
-                            data-id="${item.id}"
+                            data-id="${escapeHTML(item.id)}"
                             data-active="${item.is_active}"
                             class="${
                               item.is_active
@@ -156,7 +167,7 @@ function renderClassifications() {
 }
 
 function populateParentSubjects(selectedId = "") {
-  const subjects = classifications.filter((item) => item.parent_id === null);
+  const subjects = classifications.filter(getSubject);
 
   parentSubject.innerHTML = `
         <option value="">Select a Subject</option>
@@ -164,7 +175,7 @@ function populateParentSubjects(selectedId = "") {
           .map(
             (subject) => `
             <option
-                value="${subject.id}"
+                value="${escapeHTML(subject.id)}"
                 ${String(subject.id) === String(selectedId) ? "selected" : ""}
                 ${!subject.is_active && String(subject.id) !== String(selectedId) ? "disabled" : ""}
             >
@@ -216,12 +227,12 @@ function editClassification(id) {
 
   classificationId.value = item.id;
 
-  classificationType.value = item.parent_id === null ? "subject" : "topic";
+  classificationType.value = getSubject(item) ? "subject" : "topic";
 
   classificationType.disabled = true;
 
-  parentSubject.disabled = true;
   populateParentSubjects(item.parent_id);
+  parentSubject.disabled = true;
 
   classificationName.value = item.name || "";
   classificationDescription.value = item.description || "";
@@ -242,6 +253,8 @@ function editClassification(id) {
 async function saveClassification(event) {
   event.preventDefault();
 
+  if (isSaving) return;
+
   const id = classificationId.value;
 
   const payload = {
@@ -260,23 +273,36 @@ async function saveClassification(event) {
       return;
     }
 
+    const selectedParent = classifications.find(
+      (item) =>
+        String(item.id) === String(parentSubject.value) && getSubject(item),
+    );
+
+    if (!selectedParent || !selectedParent.is_active) {
+      showMessage("Please select an active Legal Subject.", "error");
+      return;
+    }
+
     payload.parent_id = Number(parentSubject.value);
   }
 
+  isSaving = true;
   saveButton.disabled = true;
   saveButton.textContent = "Saving...";
 
   try {
     const response = await apiRequest(
-      id ? `/admin/classifications/${id}` : "/admin/classifications",
+      id
+        ? `/admin/classifications/${encodeURIComponent(id)}`
+        : "/admin/classifications",
       {
         method: id ? "PATCH" : "POST",
         body: JSON.stringify(payload),
       },
     );
 
-    if (!response.success) {
-      throw new Error(response.message || "Could not save classification");
+    if (!response || !response.success) {
+      throw new Error(response?.message || "Could not save classification.");
     }
 
     showMessage(
@@ -288,8 +314,10 @@ async function saveClassification(event) {
     resetForm();
     await loadClassifications();
   } catch (error) {
+    console.error("Classification save error:", error);
     showMessage(error.message, "error");
   } finally {
+    isSaving = false;
     saveButton.disabled = false;
     saveButton.textContent = classificationId.value
       ? "Update Classification"
@@ -307,20 +335,25 @@ async function toggleClassification(id, currentlyActive) {
   if (!confirmed) return;
 
   try {
-    const response = await apiRequest(`/admin/classifications/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        is_active: !currentlyActive,
-      }),
-    });
+    const response = await apiRequest(
+      `/admin/classifications/${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          is_active: !currentlyActive,
+        }),
+      },
+    );
 
-    if (!response.success) {
-      throw new Error(response.message || "Status update failed");
+    if (!response || !response.success) {
+      throw new Error(response?.message || "Status update failed.");
     }
 
     showMessage(`Classification ${action}d successfully.`);
+
     await loadClassifications();
   } catch (error) {
+    console.error("Classification status error:", error);
     showMessage(error.message, "error");
   }
 }
@@ -355,15 +388,21 @@ logoutButton.addEventListener("click", async () => {
     await AuthAPI.logout();
     window.location.href = "./login.html";
   } catch (error) {
+    console.error("Logout error:", error);
     showMessage("Logout failed. Please try again.", "error");
   }
 });
 
 async function initializePage() {
   try {
-    const user = await AuthAPI.getCurrentUser();
+    const response = await AuthAPI.getCurrentUser();
 
-    if (!user || user.role !== "admin") {
+    if (!response || !response.success || !response.user) {
+      window.location.href = "./login.html";
+      return;
+    }
+
+    if (response.user.role !== "admin") {
       window.location.href = "./login.html";
       return;
     }
@@ -371,8 +410,13 @@ async function initializePage() {
     updateClassificationType();
     await loadClassifications();
   } catch (error) {
-    window.location.href = "./login.html";
+    console.error("Classification page initialization error:", error);
+
+    showMessage(
+      error.message || "Unable to initialize classification management.",
+      "error",
+    );
   }
 }
 
-initializePage();
+document.addEventListener("DOMContentLoaded", initializePage);
