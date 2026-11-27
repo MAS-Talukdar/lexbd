@@ -1,138 +1,458 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Case | LEXBD</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Case Entry | LEXBD</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
 
-<body class="bg-slate-100 min-h-screen">
+    <!-- Quill Rich Text Editor -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
+      rel="stylesheet"
+    />
 
-    <header class="bg-slate-900 text-white px-6 py-4">
-        <div class="max-w-5xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">LEXBD | Editor</h1>
-            <a href="./editor-dashboard.html"
-               class="text-sm hover:underline">
-                Back to Dashboard
-            </a>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+
+      .ql-toolbar.ql-snow {
+        border-radius: 8px 8px 0 0;
+        background: #f8fafc;
+      }
+
+      .ql-container.ql-snow {
+        border-radius: 0 0 8px 8px;
+        min-height: 450px;
+        font-size: 15px;
+      }
+
+      #judgmentEditor {
+        background: white;
+      }
+
+      .ql-editor {
+        min-height: 450px;
+        line-height: 1.7;
+      }
+
+      .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 7px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        outline: none;
+        background: white;
+      }
+
+      .form-input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+      }
+
+      .section-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 24px;
+      }
+
+      .section-heading {
+        font-size: 19px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 5px;
+      }
+
+      .section-description {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 22px;
+      }
+    </style>
+  </head>
+
+  <body class="bg-slate-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-slate-900 text-white shadow-md">
+      <div
+        class="max-w-6xl mx-auto px-5 py-5 flex justify-between items-center"
+      >
+        <div>
+          <h1 class="text-2xl font-bold tracking-wide">LEXBD</h1>
+          <p class="text-xs text-slate-300">Bangladesh Case Law Directory</p>
         </div>
+
+        <a
+          href="./editor-dashboard.html"
+          class="text-sm bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg"
+        >
+          Dashboard
+        </a>
+      </div>
     </header>
 
-    <main class="max-w-5xl mx-auto p-5 md:p-8">
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <!-- Page Heading -->
+      <div class="mb-7">
+        <h2 id="formTitle" class="text-2xl font-bold text-slate-900">
+          Add New Case
+        </h2>
 
-        <div class="bg-white rounded-xl shadow-sm p-6 md:p-8">
+        <p class="text-sm text-slate-500 mt-2">
+          Enter case information, classify the case and add the full judgment.
+        </p>
+      </div>
 
-            <h2 id="formTitle" class="text-2xl font-bold text-slate-800 mb-2">
-                Add New Case
-            </h2>
+      <form id="caseForm" class="space-y-7">
+        <!-- ================================= -->
+        <!-- 1. BASIC CASE INFORMATION -->
+        <!-- ================================= -->
 
-            <p class="text-sm text-slate-500 mb-6">
-                New cases are automatically saved as Draft.
-            </p>
+        <section class="section-card">
+          <h3 class="section-heading">1. Case Information</h3>
 
-            <div id="message"
-                 class="hidden mb-5 p-3 rounded-lg text-sm">
+          <p class="section-description">
+            Enter the basic identifying information of the case.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="md:col-span-2">
+              <label class="form-label" for="title"> Case Title * </label>
+
+              <input
+                type="text"
+                id="title"
+                name="title"
+                class="form-input"
+                placeholder="Enter case title"
+                required
+              />
             </div>
 
-            <form id="caseForm" class="space-y-5">
+            <div>
+              <label class="form-label" for="case_number"> Case Number </label>
 
-                <div>
-                    <label class="block font-medium mb-2">Case Title *</label>
-                    <input type="text" id="title" required
-                           class="w-full border rounded-lg p-3"
-                           placeholder="Enter case title">
-                </div>
+              <input
+                type="text"
+                id="case_number"
+                name="case_number"
+                class="form-input"
+                placeholder="e.g. Civil Appeal No. 01 of 2020"
+              />
+            </div>
 
-                <div class="grid md:grid-cols-2 gap-5">
+            <div>
+              <label class="form-label" for="citation"> Citation </label>
 
-                    <div>
-                        <label class="block font-medium mb-2">Case Number</label>
-                        <input type="text" id="case_number"
-                               class="w-full border rounded-lg p-3">
-                    </div>
+              <input
+                type="text"
+                id="citation"
+                name="citation"
+                class="form-input"
+                placeholder="e.g. 52 DLR (AD) 82"
+              />
+            </div>
 
-                    <div>
-                        <label class="block font-medium mb-2">Citation</label>
-                        <input type="text" id="citation"
-                               class="w-full border rounded-lg p-3">
-                    </div>
+            <div>
+              <label class="form-label" for="petitioner">
+                Petitioner / Appellant
+              </label>
 
-                    <div>
-                        <label class="block font-medium mb-2">Petitioner</label>
-                        <input type="text" id="petitioner"
-                               class="w-full border rounded-lg p-3">
-                    </div>
+              <input
+                type="text"
+                id="petitioner"
+                name="petitioner"
+                class="form-input"
+                placeholder="Enter petitioner name"
+              />
+            </div>
 
-                    <div>
-                        <label class="block font-medium mb-2">Respondent</label>
-                        <input type="text" id="respondent"
-                               class="w-full border rounded-lg p-3">
-                    </div>
+            <div>
+              <label class="form-label" for="respondent"> Respondent </label>
 
-                    <div>
-                        <label class="block font-medium mb-2">Court ID</label>
-                        <input type="number" id="court_id" min="1"
-                               class="w-full border rounded-lg p-3">
-                    </div>
+              <input
+                type="text"
+                id="respondent"
+                name="respondent"
+                class="form-input"
+                placeholder="Enter respondent name"
+              />
+            </div>
 
-                    <div>
-                        <label class="block font-medium mb-2">Decision Year</label>
-                        <input type="number" id="decision_year"
-                               min="1800" max="2200"
-                               class="w-full border rounded-lg p-3">
-                    </div>
+            <div>
+              <label class="form-label" for="court_id"> Court </label>
 
-                    <div>
-                        <label class="block font-medium mb-2">Decision Date</label>
-                        <input type="date" id="decision_date"
-                               class="w-full border rounded-lg p-3">
-                    </div>
+              <select id="court_id" name="court_id" class="form-input">
+                <option value="">Select Court</option>
+              </select>
+            </div>
 
-                </div>
+            <div>
+              <label class="form-label" for="decision_year">
+                Decision Year
+              </label>
 
-                <div>
-                    <label class="block font-medium mb-2">Judgment Text</label>
-                    <textarea id="judgment_text" rows="12"
-                              class="w-full border rounded-lg p-3"
-                              placeholder="Enter full judgment text"></textarea>
-                </div>
+              <input
+                type="number"
+                id="decision_year"
+                name="decision_year"
+                class="form-input"
+                min="1800"
+                max="2200"
+                placeholder="e.g. 2024"
+              />
+            </div>
 
-                <div>
-                    <label class="block font-medium mb-2">PDF URL</label>
-                    <input type="url" id="pdf_url"
-                           class="w-full border rounded-lg p-3"
-                           placeholder="https://example.com/judgment.pdf">
-                </div>
+            <div>
+              <label class="form-label" for="decision_date">
+                Decision Date
+              </label>
 
-                <div>
-                    <label class="block font-medium mb-2">Source URL</label>
-                    <input type="url" id="source_url"
-                           class="w-full border rounded-lg p-3"
-                           placeholder="https://example.com/source">
-                </div>
+              <input
+                type="date"
+                id="decision_date"
+                name="decision_date"
+                class="form-input"
+              />
+            </div>
+          </div>
+        </section>
 
-                <div class="flex flex-wrap gap-3 pt-4">
+        <!-- ================================= -->
+        <!-- 2. CASE CLASSIFICATION -->
+        <!-- ================================= -->
 
-                    <button type="submit" id="saveButton"
-                            class="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800">
-                        Save Draft
-                    </button>
+        <section class="section-card">
+          <h3 class="section-heading">2. Legal Classification</h3>
 
-                    <a href="./editor-dashboard.html"
-                       class="bg-slate-200 px-6 py-3 rounded-lg font-semibold">
-                        Cancel
-                    </a>
+          <p class="section-description">
+            Classify this case by its legal subject and relevant legal topics.
+            This information will support future advanced legal research.
+          </p>
 
-                </div>
+          <div class="space-y-6">
+            <!-- Primary Legal Subject -->
+            <div>
+              <label class="form-label" for="legal_subject">
+                Primary Legal Subject
+              </label>
 
-            </form>
-        </div>
+              <select
+                id="legal_subject"
+                name="legal_subject"
+                class="form-input"
+              >
+                <option value="">Select Primary Legal Subject</option>
+              </select>
 
+              <p class="text-xs text-slate-500 mt-2">
+                Select the main branch of law to which this case belongs.
+              </p>
+            </div>
+
+            <!-- Legal Topics -->
+            <div>
+              <label class="form-label" for="legal_topics">
+                Legal Topics
+              </label>
+
+              <select
+                id="legal_topics"
+                name="legal_topics"
+                class="form-input"
+                multiple
+                size="7"
+              ></select>
+
+              <p class="text-xs text-slate-500 mt-2">
+                You can select multiple topics. Use Ctrl (Windows) or Command
+                (Mac) while clicking to select multiple items.
+              </p>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
+              <p class="text-sm font-semibold text-blue-900">
+                Classification Guideline
+              </p>
+
+              <p class="text-xs text-blue-800 mt-1 leading-5">
+                Select topics based on the actual legal questions, issues and
+                principles discussed in the judgment. Do not assign unrelated
+                topics.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================= -->
+        <!-- 3. JUDGMENT TEXT EDITOR -->
+        <!-- ================================= -->
+
+        <section class="section-card">
+          <h3 class="section-heading">3. Judgment Text</h3>
+
+          <p class="section-description">
+            Enter the full judgment text. Use the formatting toolbar to organize
+            the judgment.
+          </p>
+
+          <!-- Quill Editor Toolbar -->
+          <div id="judgmentToolbar">
+            <span class="ql-formats">
+              <select class="ql-header">
+                <option selected></option>
+                <option value="1"></option>
+                <option value="2"></option>
+                <option value="3"></option>
+              </select>
+
+              <select class="ql-size">
+                <option value="small"></option>
+                <option selected></option>
+                <option value="large"></option>
+                <option value="huge"></option>
+              </select>
+            </span>
+
+            <span class="ql-formats">
+              <button class="ql-bold"></button>
+              <button class="ql-italic"></button>
+              <button class="ql-underline"></button>
+              <button class="ql-strike"></button>
+            </span>
+
+            <span class="ql-formats">
+              <select class="ql-color"></select>
+              <select class="ql-background"></select>
+            </span>
+
+            <span class="ql-formats">
+              <button class="ql-list" value="ordered"></button>
+              <button class="ql-list" value="bullet"></button>
+              <button class="ql-indent" value="-1"></button>
+              <button class="ql-indent" value="+1"></button>
+            </span>
+
+            <span class="ql-formats">
+              <select class="ql-align"></select>
+              <button class="ql-blockquote"></button>
+            </span>
+
+            <span class="ql-formats">
+              <button class="ql-link"></button>
+              <button class="ql-clean"></button>
+            </span>
+          </div>
+
+          <!-- Editor Container -->
+          <div id="judgmentEditor"></div>
+
+          <!--
+                    Hidden textarea preserves the existing judgment_text ID.
+                    JavaScript will transfer Quill HTML into this field.
+                -->
+          <textarea
+            id="judgment_text"
+            name="judgment_text"
+            class="hidden"
+          ></textarea>
+
+          <div class="flex justify-between items-center mt-3">
+            <p class="text-xs text-slate-500">
+              Preserve the original wording of the judgment.
+            </p>
+
+            <span id="judgmentWordCount" class="text-xs text-slate-500">
+              0 words
+            </span>
+          </div>
+        </section>
+
+        <!-- ================================= -->
+        <!-- 4. DOCUMENT LINKS -->
+        <!-- ================================= -->
+
+        <section class="section-card">
+          <h3 class="section-heading">4. Reference Documents</h3>
+
+          <p class="section-description">
+            Add the original judgment PDF and source reference, if available.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="form-label" for="pdf_url"> Judgment PDF URL </label>
+
+              <input
+                type="url"
+                id="pdf_url"
+                name="pdf_url"
+                class="form-input"
+                placeholder="https://example.com/judgment.pdf"
+              />
+            </div>
+
+            <div>
+              <label class="form-label" for="source_url"> Source URL </label>
+
+              <input
+                type="url"
+                id="source_url"
+                name="source_url"
+                class="form-input"
+                placeholder="https://example.com/source"
+              />
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================= -->
+        <!-- 5. SUBMIT -->
+        <!-- ================================= -->
+
+        <section class="section-card">
+          <div
+            id="message"
+            class="hidden mb-5 p-3 rounded-lg text-sm"
+            role="alert"
+          ></div>
+
+          <div class="flex flex-col sm:flex-row gap-3 justify-end">
+            <a
+              href="./editor-dashboard.html"
+              class="px-6 py-3 text-center border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 font-semibold"
+            >
+              Cancel
+            </a>
+
+            <button
+              type="submit"
+              id="saveButton"
+              class="px-7 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-lg font-semibold"
+            >
+              Save Case
+            </button>
+          </div>
+        </section>
+      </form>
     </main>
 
-    <script src="./js/editor-case-form.js"></script>
+    <!-- Quill JS -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
-</body>
+    <!-- Existing Case Form JavaScript -->
+    <script src="./js/editor-case-form.js"></script>
+  </body>
 </html>

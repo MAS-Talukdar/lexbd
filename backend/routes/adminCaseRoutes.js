@@ -8,6 +8,46 @@ const router = express.Router();
 
 router.use(requireRole("admin", "editor"));
 
+
+/**
+ * GET /api/admin/cases/topics
+ * Retrieve legal subjects and topics for case classification.
+ * Parent topics = Legal Subjects
+ * Child topics = Legal Topics
+ */
+
+router.get("/topics", async (req, res) => {
+    try {
+        const pool = getPool();
+
+        const result = await pool.query(`
+            SELECT
+                id,
+                name,
+                parent_id,
+                description
+            FROM legal_topics
+            ORDER BY
+                parent_id NULLS FIRST,
+                name ASC
+        `);
+
+        return res.status(200).json({
+            success: true,
+            topics: result.rows
+        });
+
+    } catch (error) {
+        console.error("Legal topics retrieval error:", error.message);
+
+        return res.status(500).json({
+            success: false,
+            message: "Could not retrieve legal topics"
+        });
+    }
+});
+
+
 // =====================================
 // CASE FIELDS
 // =====================================
